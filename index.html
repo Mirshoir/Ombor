@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#111827" />
+  <link rel="manifest" href="manifest.json">
+  <title>Ombor</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+    body{background:#f3f4f6;color:#111827;padding-bottom:80px}
+    header{background:#111827;color:#fff;padding:20px 16px;text-align:center;position:sticky;top:0;z-index:5}
+    header h1{font-size:24px;margin-bottom:4px}
+    header p{font-size:13px;color:#d1d5db}
+    .wrap{width:94%;max-width:900px;margin:16px auto}
+    .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+    .card{background:white;border-radius:16px;padding:14px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+    .card span{display:block;font-size:12px;color:#6b7280;margin-bottom:6px}
+    .card b{font-size:21px}
+    .panel{background:white;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+    h2{font-size:19px;margin-bottom:12px}
+    label{font-size:13px;font-weight:bold;color:#374151;margin-bottom:6px;display:block}
+    input{width:100%;padding:13px;border:1px solid #d1d5db;border-radius:12px;font-size:15px;margin-bottom:11px}
+    input:focus{outline:none;border-color:#111827}
+    button{width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:bold;color:#fff;background:#111827;cursor:pointer;margin-top:4px}
+    .green{background:#059669}.red{background:#dc2626}.gray{background:#6b7280}
+    .tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px;border-top:1px solid #e5e7eb;z-index:10}
+    .tabs button{margin:0;padding:10px 4px;border-radius:12px;font-size:12px;background:#e5e7eb;color:#111827}
+    .tabs button.active{background:#111827;color:white}
+    .hidden{display:none}
+    .search{margin-bottom:12px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px 6px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:13px}
+    th{font-size:12px;color:#6b7280}
+    .empty{text-align:center;color:#6b7280;padding:20px}
+    .item{border:1px solid #e5e7eb;border-radius:14px;padding:12px;margin-bottom:10px;background:#fff}
+    .item .top{display:flex;justify-content:space-between;gap:10px;margin-bottom:5px}
+    .item b{font-size:15px}
+    .item small{color:#6b7280}
+    .profit{color:#059669}.loss{color:#dc2626}
+    .note{background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:11px;border-radius:12px;font-size:13px;margin-bottom:12px}
+    @media(min-width:700px){
+      .cards{grid-template-columns:repeat(4,1fr)}
+      .form2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+      .form2 input{margin-bottom:0}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Ombor</h1>
+  <p>Kirim · Chiqim · Qoldiq · Foyda hisoboti</p>
+</header>
+
+<div class="wrap">
+  <div class="cards">
+    <div class="card"><span>Jami qoldiq</span><b id="sumQty">0</b></div>
+    <div class="card"><span>Qoldiq summasi</span><b id="sumStock">0</b></div>
+    <div class="card"><span>Sotuv summasi</span><b id="sumSales">0</b></div>
+    <div class="card"><span>Foyda</span><b id="sumProfit">0</b></div>
+  </div>
+
+  <section id="tabIn" class="panel">
+    <h2>Kirim qilish</h2>
+    <div class="note">Model oldin bo‘lmasa, kirim qilganda avtomatik yaratiladi. Oldin bo‘lsa, qoldiqqa qo‘shiladi.</div>
+    <label>Model nomi</label>
+    <input id="inModel" placeholder="Masalan: P-102" />
+    <label>Varianti</label>
+    <input id="inVariant" placeholder="Masalan: Qora / 46-54" />
+    <label>Kirim soni</label>
+    <input id="inQty" type="number" placeholder="Masalan: 90" />
+    <label>Olingan narxi</label>
+    <input id="inPrice" type="number" step="0.01" placeholder="Masalan: 55000" />
+    <button class="green" onclick="addIn()">Kirim qilish</button>
+  </section>
+
+  <section id="tabOut" class="panel hidden">
+    <h2>Chiqim qilish</h2>
+    <label>Model nomi</label>
+    <input id="outModel" placeholder="Masalan: P-102" />
+    <label>Varianti</label>
+    <input id="outVariant" placeholder="Masalan: Qora / 46-54" />
+    <label>Chiqim soni</label>
+    <input id="outQty" type="number" placeholder="Masalan: 10" />
+    <label>Sotilgan narxi</label>
+    <input id="outPrice" type="number" step="0.01" placeholder="Masalan: 70000" />
+    <button class="red" onclick="addOut()">Chiqim qilish</button>
+  </section>
+
+  <section id="tabStock" class="panel hidden">
+    <h2>Qoldiq</h2>
+    <input class="search" id="searchStock" onkeyup="render()" placeholder="Model yoki variant bo‘yicha qidirish..." />
+    <div id="stockList"></div>
+  </section>
+
+  <section id="tabReport" class="panel hidden">
+    <h2>Pul hisoboti</h2>
+    <div id="reportBox"></div>
+    <button class="gray" onclick="exportCSV()">Hisobotni CSV qilish</button>
+    <button class="red" onclick="resetAll()">Hammasini tozalash</button>
+  </section>
+</div>
+
+<div class="tabs">
+  <button id="btnIn" class="active" onclick="showTab('In')">Kirim</button>
+  <button id="btnOut" onclick="showTab('Out')">Chiqim</button>
+  <button id="btnStock" onclick="showTab('Stock')">Qoldiq</button>
+  <button id="btnReport" onclick="showTab('Report')">Hisobot</button>
+</div>
+
+<script>
+let state = {
+  products: [],
+  sales: [],
+  summary: {
+    totalQty: 0,
+    stockValue: 0,
+    totalSales: 0,
+    totalProfit: 0
+  }
+};
+
+function money(n){
+  return Number(n || 0).toLocaleString("uz-UZ");
+}
+
+async function api(url, options){
+  const res = await fetch(url, options);
+  let payload = {};
+
+  try {
+    payload = await res.json();
+  } catch (_err) {
+    payload = {};
+  }
+
+  if(!res.ok){
+    throw new Error(payload.error || "Server xatosi");
+  }
+
+  return payload;
+}
+
+async function loadState(){
+  state = await api("/api/state");
+}
+
+function showTab(name){
+  ["In","Out","Stock","Report"].forEach(t=>{
+    document.getElementById("tab"+t).classList.add("hidden");
+    document.getElementById("btn"+t).classList.remove("active");
+  });
+
+  document.getElementById("tab"+name).classList.remove("hidden");
+  document.getElementById("btn"+name).classList.add("active");
+  render();
+}
+
+async function addIn(){
+  const model = document.getElementById("inModel").value.trim();
+  const variant = document.getElementById("inVariant").value.trim();
+  const qty = Number(document.getElementById("inQty").value);
+  const price = Number(document.getElementById("inPrice").value);
+
+  if(!model || !variant || qty <= 0 || price < 0){
+    alert("Model, variant, soni va olingan narxini to‘g‘ri kiriting.");
+    return;
+  }
+
+  try {
+    await api("/api/in", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model, variant, qty, price })
+    });
+
+    document.getElementById("inModel").value = "";
+    document.getElementById("inVariant").value = "";
+    document.getElementById("inQty").value = "";
+    document.getElementById("inPrice").value = "";
+
+    await render();
+    alert("Kirim saqlandi.");
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function addOut(){
+  const model = document.getElementById("outModel").value.trim();
+  const variant = document.getElementById("outVariant").value.trim();
+  const qty = Number(document.getElementById("outQty").value);
+  const sellPrice = Number(document.getElementById("outPrice").value);
+
+  if(!model || !variant || qty <= 0 || sellPrice < 0){
+    alert("Model, variant, chiqim soni va sotilgan narxini to‘g‘ri kiriting.");
+    return;
+  }
+
+  try {
+    const result = await api("/api/out", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model, variant, qty, sellPrice })
+    });
+
+    document.getElementById("outModel").value = "";
+    document.getElementById("outVariant").value = "";
+    document.getElementById("outQty").value = "";
+    document.getElementById("outPrice").value = "";
+
+    await render();
+    alert("Chiqim saqlandi. Foyda: " + money(result.profit));
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function render(){
+  try {
+    await loadState();
+  } catch (_err) {
+    alert("Serverga ulanib bo‘lmadi. Backend ishlayotganini tekshiring.");
+    return;
+  }
+
+  document.getElementById("sumQty").textContent = money(state.summary.totalQty);
+  document.getElementById("sumStock").textContent = money(state.summary.stockValue);
+  document.getElementById("sumSales").textContent = money(state.summary.totalSales);
+  document.getElementById("sumProfit").textContent = money(state.summary.totalProfit);
+
+  renderStock();
+  renderReport();
+}
+
+function renderStock(){
+  const q = (document.getElementById("searchStock")?.value || "").toLowerCase();
+  const box = document.getElementById("stockList");
+
+  const items = state.products.filter(p =>
+    p.model.toLowerCase().includes(q) ||
+    p.variant.toLowerCase().includes(q)
+  );
+
+  if(items.length === 0){
+    box.innerHTML = '<div class="empty">Qoldiq yo‘q</div>';
+    return;
+  }
+
+  box.innerHTML = items.map(p => `
+    <div class="item">
+      <div class="top">
+        <b>${p.model}</b>
+        <b>${money(p.qty)} dona</b>
+      </div>
+      <small>Variant: ${p.variant}</small><br>
+      <small>Olingan o‘rtacha narx: ${money(p.buyPrice)}</small><br>
+      <small>Qoldiq summasi: ${money(Number(p.qty)*Number(p.buyPrice))}</small>
+    </div>
+  `).join("");
+}
+
+function renderReport(){
+  const box = document.getElementById("reportBox");
+
+  if(state.sales.length === 0){
+    box.innerHTML = '<div class="empty">Hali chiqim qilinmagan</div>';
+    return;
+  }
+
+  box.innerHTML = state.sales.map(x => `
+    <div class="item">
+      <div class="top">
+        <b>${x.model}</b>
+        <b class="${x.profit >= 0 ? "profit":"loss"}">${money(x.profit)}</b>
+      </div>
+      <small>${new Date(x.createdAt).toLocaleString("uz-UZ")}</small><br>
+      <small>Variant: ${x.variant}</small><br>
+      <small>Soni: ${money(x.qty)} dona</small><br>
+      <small>Olingan: ${money(x.buyPrice)} · Sotilgan: ${money(x.sellPrice)}</small><br>
+      <small>Sotuv: ${money(x.sales)} · Tannarx: ${money(x.cost)}</small>
+    </div>
+  `).join("");
+}
+
+function exportCSV(){
+  window.location.href = "/api/export/csv";
+}
+
+async function resetAll(){
+  if(confirm("Hamma qoldiq va hisobot o‘chadi. Davom etasizmi?")){
+    try {
+      await api("/api/reset", { method: "DELETE" });
+      await render();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+}
+
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+
+render();
+</script>
+</body>
+</html>
