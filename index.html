@@ -39,6 +39,12 @@
     .item small{color:#6b7280}
     .profit{color:#059669}.loss{color:#dc2626}
     .note{background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:11px;border-radius:12px;font-size:13px;margin-bottom:12px}
+    .rows{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+    .rowCard{border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#f9fafb}
+    .rowHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:12px;color:#6b7280}
+    .miniBtn{padding:8px 10px;border-radius:10px;font-size:13px;font-weight:700;width:auto;margin:0}
+    .miniPlus{background:#111827;color:#fff}
+    .miniRemove{background:#e5e7eb;color:#111827}
     @media(min-width:700px){
       .cards{grid-template-columns:repeat(4,1fr)}
       .form2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
@@ -63,27 +69,15 @@
   <section id="tabIn" class="panel">
     <h2>Kirim qilish</h2>
     <div class="note">Model oldin bo‘lmasa, kirim qilganda avtomatik yaratiladi. Oldin bo‘lsa, qoldiqqa qo‘shiladi.</div>
-    <label>Model nomi</label>
-    <input id="inModel" list="modelOptions" placeholder="Masalan: P-102" />
-    <label>Varianti</label>
-    <input id="inVariant" list="variantOptions" placeholder="Masalan: Qora / 46-54" />
-    <label>Kirim soni</label>
-    <input id="inQty" type="number" placeholder="Masalan: 90" />
-    <label>Olingan narxi</label>
-    <input id="inPrice" type="number" step="0.01" placeholder="Masalan: 55000" />
+    <div id="inRows" class="rows"></div>
+    <button class="miniBtn miniPlus" onclick="addInRow()">+ Qator qo‘shish</button>
     <button class="green" onclick="addIn()">Kirim qilish</button>
   </section>
 
   <section id="tabOut" class="panel hidden">
     <h2>Chiqim qilish</h2>
-    <label>Model nomi</label>
-    <input id="outModel" list="modelOptions" placeholder="Masalan: P-102" />
-    <label>Varianti</label>
-    <input id="outVariant" list="variantOptions" placeholder="Masalan: Qora / 46-54" />
-    <label>Chiqim soni</label>
-    <input id="outQty" type="number" placeholder="Masalan: 10" />
-    <label>Sotilgan narxi</label>
-    <input id="outPrice" type="number" step="0.01" placeholder="Masalan: 70000" />
+    <div id="outRows" class="rows"></div>
+    <button class="miniBtn miniPlus" onclick="addOutRow()">+ Qator qo‘shish</button>
     <button class="red" onclick="addOut()">Chiqim qilish</button>
   </section>
 
@@ -148,6 +142,63 @@ async function loadState(){
   state = await api("/api/state");
 }
 
+function inRowTemplate(i){
+  return `
+    <div class="rowCard" data-row="${i}">
+      <div class="rowHead">
+        <span>Kirim #${i + 1}</span>
+        <button class="miniBtn miniRemove" type="button" onclick="removeRow('inRows', this)">O‘chirish</button>
+      </div>
+      <label>Model nomi</label>
+      <input data-f="model" list="modelOptions" placeholder="Masalan: P-102" />
+      <label>Varianti</label>
+      <input data-f="variant" list="variantOptions" placeholder="Masalan: Qora / 46-54" />
+      <label>Kirim soni</label>
+      <input data-f="qty" type="number" placeholder="Masalan: 90" />
+      <label>Olingan narxi</label>
+      <input data-f="price" type="number" step="0.01" placeholder="Masalan: 55000" />
+    </div>
+  `;
+}
+
+function outRowTemplate(i){
+  return `
+    <div class="rowCard" data-row="${i}">
+      <div class="rowHead">
+        <span>Chiqim #${i + 1}</span>
+        <button class="miniBtn miniRemove" type="button" onclick="removeRow('outRows', this)">O‘chirish</button>
+      </div>
+      <label>Model nomi</label>
+      <input data-f="model" list="modelOptions" placeholder="Masalan: P-102" />
+      <label>Varianti</label>
+      <input data-f="variant" list="variantOptions" placeholder="Masalan: Qora / 46-54" />
+      <label>Chiqim soni</label>
+      <input data-f="qty" type="number" placeholder="Masalan: 10" />
+      <label>Sotilgan narxi</label>
+      <input data-f="price" type="number" step="0.01" placeholder="Masalan: 70000" />
+    </div>
+  `;
+}
+
+function addInRow(){
+  const box = document.getElementById("inRows");
+  box.insertAdjacentHTML("beforeend", inRowTemplate(box.children.length));
+}
+
+function addOutRow(){
+  const box = document.getElementById("outRows");
+  box.insertAdjacentHTML("beforeend", outRowTemplate(box.children.length));
+}
+
+function removeRow(containerId, btn){
+  const box = document.getElementById(containerId);
+  if(box.children.length <= 1){
+    alert("Kamida bitta qator qolishi kerak.");
+    return;
+  }
+  btn.closest(".rowCard").remove();
+}
+
 function showTab(name){
   ["In","Out","Stock","Report"].forEach(t=>{
     document.getElementById("tab"+t).classList.add("hidden");
@@ -160,60 +211,56 @@ function showTab(name){
 }
 
 async function addIn(){
-  const model = document.getElementById("inModel").value.trim();
-  const variant = document.getElementById("inVariant").value.trim();
-  const qty = Number(document.getElementById("inQty").value);
-  const price = Number(document.getElementById("inPrice").value);
-
-  if(!model || !variant || qty <= 0 || price < 0){
-    alert("Model, variant, soni va olingan narxini to‘g‘ri kiriting.");
-    return;
-  }
-
   try {
-    await api("/api/in", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model, variant, qty, price })
-    });
-
-    document.getElementById("inModel").value = "";
-    document.getElementById("inVariant").value = "";
-    document.getElementById("inQty").value = "";
-    document.getElementById("inPrice").value = "";
+    const rows = [...document.querySelectorAll("#inRows .rowCard")];
+    for(const row of rows){
+      const model = row.querySelector('[data-f="model"]').value.trim();
+      const variant = row.querySelector('[data-f="variant"]').value.trim();
+      const qty = Number(row.querySelector('[data-f="qty"]').value);
+      const price = Number(row.querySelector('[data-f="price"]').value);
+      if(!model || !variant || qty <= 0 || price < 0){
+        throw new Error("Kirim qatorlarida model, variant, son va narxni to‘g‘ri kiriting.");
+      }
+      await api("/api/in", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model, variant, qty, price })
+      });
+    }
 
     await render();
-    alert("Kirim saqlandi.");
+    document.getElementById("inRows").innerHTML = "";
+    addInRow();
+    alert("Barcha kirimlar saqlandi.");
   } catch (err) {
     alert(err.message);
   }
 }
 
 async function addOut(){
-  const model = document.getElementById("outModel").value.trim();
-  const variant = document.getElementById("outVariant").value.trim();
-  const qty = Number(document.getElementById("outQty").value);
-  const sellPrice = Number(document.getElementById("outPrice").value);
-
-  if(!model || !variant || qty <= 0 || sellPrice < 0){
-    alert("Model, variant, chiqim soni va sotilgan narxini to‘g‘ri kiriting.");
-    return;
-  }
-
   try {
-    const result = await api("/api/out", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model, variant, qty, sellPrice })
-    });
-
-    document.getElementById("outModel").value = "";
-    document.getElementById("outVariant").value = "";
-    document.getElementById("outQty").value = "";
-    document.getElementById("outPrice").value = "";
+    const rows = [...document.querySelectorAll("#outRows .rowCard")];
+    let totalProfit = 0;
+    for(const row of rows){
+      const model = row.querySelector('[data-f="model"]').value.trim();
+      const variant = row.querySelector('[data-f="variant"]').value.trim();
+      const qty = Number(row.querySelector('[data-f="qty"]').value);
+      const sellPrice = Number(row.querySelector('[data-f="price"]').value);
+      if(!model || !variant || qty <= 0 || sellPrice < 0){
+        throw new Error("Chiqim qatorlarida model, variant, son va narxni to‘g‘ri kiriting.");
+      }
+      const result = await api("/api/out", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model, variant, qty, sellPrice })
+      });
+      totalProfit += Number(result.profit || 0);
+    }
 
     await render();
-    alert("Chiqim saqlandi. Foyda: " + money(result.profit));
+    document.getElementById("outRows").innerHTML = "";
+    addOutRow();
+    alert("Barcha chiqimlar saqlandi. Jami foyda: " + money(totalProfit));
   } catch (err) {
     alert(err.message);
   }
@@ -317,6 +364,8 @@ if("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js").catch(()=>{});
 }
 
+addInRow();
+addOutRow();
 render();
 </script>
 </body>
