@@ -117,12 +117,19 @@ let state = {
   }
 };
 
+const API_BASE = location.protocol === "file:" ? "https://ombor-mkb2.onrender.com" : "";
+
+function apiUrl(path){
+  if(/^https?:\/\//i.test(path)) return path;
+  return `${API_BASE}${path}`;
+}
+
 function money(n){
   return Number(n || 0).toLocaleString("uz-UZ");
 }
 
 async function api(url, options){
-  const res = await fetch(url, options);
+  const res = await fetch(apiUrl(url), options);
   let payload = {};
 
   try {
@@ -346,7 +353,7 @@ function renderReport(){
 }
 
 function exportCSV(){
-  window.location.href = "/api/export/csv";
+  window.location.href = apiUrl("/api/export/csv");
 }
 
 async function resetAll(){
