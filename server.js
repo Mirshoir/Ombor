@@ -34,6 +34,7 @@ const MIME_TYPES = {
   ".js": "application/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".svg": "image/svg+xml",
+  ".png": "image/png",
   ".css": "text/css; charset=utf-8",
   ".txt": "text/plain; charset=utf-8",
   ".yml": "text/yaml; charset=utf-8",
@@ -48,7 +49,14 @@ function getConfigError() {
 }
 
 function normalize(value) {
-  return String(value || "").trim().toLowerCase();
+  return String(value || "")
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase()
+    .replace(/[’`]/g, "'")
+    .replace(/\s+/g, " ")
+    .replace(/\s*\/\s*/g, "/")
+    .replace(/\s*-\s*/g, "-");
 }
 
 function makeKey(model, variant) {
