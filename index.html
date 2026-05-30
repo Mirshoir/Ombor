@@ -64,9 +64,9 @@
     <h2>Kirim qilish</h2>
     <div class="note">Model oldin bo‘lmasa, kirim qilganda avtomatik yaratiladi. Oldin bo‘lsa, qoldiqqa qo‘shiladi.</div>
     <label>Model nomi</label>
-    <input id="inModel" placeholder="Masalan: P-102" />
+    <input id="inModel" list="modelOptions" placeholder="Masalan: P-102" />
     <label>Varianti</label>
-    <input id="inVariant" placeholder="Masalan: Qora / 46-54" />
+    <input id="inVariant" list="variantOptions" placeholder="Masalan: Qora / 46-54" />
     <label>Kirim soni</label>
     <input id="inQty" type="number" placeholder="Masalan: 90" />
     <label>Olingan narxi</label>
@@ -77,9 +77,9 @@
   <section id="tabOut" class="panel hidden">
     <h2>Chiqim qilish</h2>
     <label>Model nomi</label>
-    <input id="outModel" placeholder="Masalan: P-102" />
+    <input id="outModel" list="modelOptions" placeholder="Masalan: P-102" />
     <label>Varianti</label>
-    <input id="outVariant" placeholder="Masalan: Qora / 46-54" />
+    <input id="outVariant" list="variantOptions" placeholder="Masalan: Qora / 46-54" />
     <label>Chiqim soni</label>
     <input id="outQty" type="number" placeholder="Masalan: 10" />
     <label>Sotilgan narxi</label>
@@ -100,6 +100,9 @@
     <button class="red" onclick="resetAll()">Hammasini tozalash</button>
   </section>
 </div>
+
+<datalist id="modelOptions"></datalist>
+<datalist id="variantOptions"></datalist>
 
 <div class="tabs">
   <button id="btnIn" class="active" onclick="showTab('In')">Kirim</button>
@@ -231,6 +234,18 @@ async function render(){
 
   renderStock();
   renderReport();
+  renderSuggestions();
+}
+
+function renderSuggestions(){
+  const modelList = document.getElementById("modelOptions");
+  const variantList = document.getElementById("variantOptions");
+
+  const models = [...new Set(state.products.map(p => p.model))].sort((a, b) => a.localeCompare(b));
+  const variants = [...new Set(state.products.map(p => p.variant))].sort((a, b) => a.localeCompare(b));
+
+  modelList.innerHTML = models.map(m => `<option value="${m.replace(/"/g, "&quot;")}"></option>`).join("");
+  variantList.innerHTML = variants.map(v => `<option value="${v.replace(/"/g, "&quot;")}"></option>`).join("");
 }
 
 function renderStock(){
