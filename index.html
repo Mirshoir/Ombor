@@ -45,6 +45,7 @@
     .miniBtn{padding:8px 10px;border-radius:10px;font-size:13px;font-weight:700;width:auto;margin:0}
     .miniPlus{background:#111827;color:#fff}
     .miniRemove{background:#e5e7eb;color:#111827}
+    .sumBox{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;padding:10px;border-radius:12px;font-size:13px;margin:8px 0 10px}
     @media(min-width:700px){
       .cards{grid-template-columns:repeat(4,1fr)}
       .form2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
@@ -77,6 +78,9 @@
   <section id="tabOut" class="panel hidden">
     <h2>Chiqim qilish</h2>
     <div id="outRows" class="rows"></div>
+    <div id="outTotals" class="sumBox">
+      Jami chiqim soni: <b id="sumOutQty">0</b> · Jami sotuv summasi: <b id="sumOutSales">0</b>
+    </div>
     <button class="miniBtn miniPlus" onclick="addOutRow()">+ Qator qo‘shish</button>
     <button class="red" onclick="addOut()">Chiqim qilish</button>
   </section>
@@ -195,6 +199,8 @@ function addInRow(){
 function addOutRow(){
   const box = document.getElementById("outRows");
   box.insertAdjacentHTML("beforeend", outRowTemplate(box.children.length));
+  bindOutRowEvents();
+  updateOutTotals();
 }
 
 function removeRow(containerId, btn){
@@ -204,6 +210,39 @@ function removeRow(containerId, btn){
     return;
   }
   btn.closest(".rowCard").remove();
+  if(containerId === "outRows"){
+    updateOutTotals();
+  }
+}
+
+function bindOutRowEvents(){
+  const rows = [...document.querySelectorAll("#outRows .rowCard")];
+  rows.forEach((row)=>{
+    const qtyInput = row.querySelector('[data-f="qty"]');
+    const priceInput = row.querySelector('[data-f="price"]');
+    if(qtyInput && !qtyInput.dataset.bound){
+      qtyInput.addEventListener("input", updateOutTotals);
+      qtyInput.dataset.bound = "1";
+    }
+    if(priceInput && !priceInput.dataset.bound){
+      priceInput.addEventListener("input", updateOutTotals);
+      priceInput.dataset.bound = "1";
+    }
+  });
+}
+
+function updateOutTotals(){
+  const rows = [...document.querySelectorAll("#outRows .rowCard")];
+  let totalQty = 0;
+  let totalSales = 0;
+  for(const row of rows){
+    const qty = Number(row.querySelector('[data-f="qty"]').value || 0);
+    const sellPrice = Number(row.querySelector('[data-f="price"]').value || 0);
+    if(qty > 0) totalQty += qty;
+    if(qty > 0 && sellPrice >= 0) totalSales += qty * sellPrice;
+  }
+  document.getElementById("sumOutQty").textContent = money(totalQty);
+  document.getElementById("sumOutSales").textContent = money(totalSales);
 }
 
 function showTab(name){
@@ -267,6 +306,7 @@ async function addOut(){
     await render();
     document.getElementById("outRows").innerHTML = "";
     addOutRow();
+    updateOutTotals();
     alert("Barcha chiqimlar saqlandi. Jami foyda: " + money(totalProfit));
   } catch (err) {
     alert(err.message);
