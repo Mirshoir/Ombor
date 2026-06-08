@@ -39,6 +39,7 @@
     .item small{color:#6b7280}
     .profit{color:#059669}.loss{color:#dc2626}
     .note{background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:11px;border-radius:12px;font-size:13px;margin-bottom:12px}
+    .dangerNote{background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;padding:11px;border-radius:12px;font-size:13px;margin-bottom:12px}
     .rows{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
     .rowCard{border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#f9fafb}
     .rowHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:12px;color:#6b7280}
@@ -46,6 +47,10 @@
     .miniPlus{background:#111827;color:#fff}
     .miniRemove{background:#e5e7eb;color:#111827}
     .sumBox{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;padding:10px;border-radius:12px;font-size:13px;margin:8px 0 10px}
+    .actionRow{display:flex;gap:8px;margin-top:10px}
+    .actionRow button{flex:1}
+    .reportDay{border:1px solid #dbeafe;background:#f8fbff;border-radius:14px;padding:12px;margin-bottom:10px}
+    .reportDay h3{font-size:15px;margin-bottom:8px}
     @media(min-width:700px){
       .cards{grid-template-columns:repeat(4,1fr)}
       .form2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
@@ -78,9 +83,6 @@
   <section id="tabOut" class="panel hidden">
     <h2>Chiqim qilish</h2>
     <div id="outRows" class="rows"></div>
-    <div id="outTotals" class="sumBox">
-      Jami chiqim soni: <b id="sumOutQty">0</b> · Jami sotuv summasi: <b id="sumOutSales">0</b>
-    </div>
     <button class="miniBtn miniPlus" onclick="addOutRow()">+ Qator qo‘shish</button>
     <button class="red" onclick="addOut()">Chiqim qilish</button>
   </section>
@@ -95,6 +97,7 @@
     <h2>Pul hisoboti</h2>
     <div id="reportBox"></div>
     <button class="gray" onclick="exportCSV()">Hisobotni CSV qilish</button>
+    <div class="dangerNote">Diqqat: quyidagi tugma bosilsa, barcha qoldiq, kirim va chiqim ma’lumotlari butunlay o‘chadi.</div>
     <button class="red" onclick="resetAll()">Hammasini tozalash</button>
   </section>
 </div>
@@ -168,6 +171,9 @@ function inRowTemplate(i){
       <input data-f="qty" type="number" placeholder="Masalan: 90" />
       <label>Olingan narxi</label>
       <input data-f="price" type="number" step="0.01" placeholder="Masalan: 55000" />
+      <label>Sana</label>
+      <input data-f="date" type="date" />
+      <div class="sumBox">Jami: <b data-sum="in">0</b></div>
     </div>
   `;
 }
@@ -187,6 +193,9 @@ function outRowTemplate(i){
       <input data-f="qty" type="number" placeholder="Masalan: 10" />
       <label>Sotilgan narxi</label>
       <input data-f="price" type="number" step="0.01" placeholder="Masalan: 70000" />
+      <label>Sana</label>
+      <input data-f="date" type="date" />
+      <div class="sumBox">Jami: <b data-sum="out">0</b></div>
     </div>
   `;
 }
@@ -194,13 +203,21 @@ function outRowTemplate(i){
 function addInRow(){
   const box = document.getElementById("inRows");
   box.insertAdjacentHTML("beforeend", inRowTemplate(box.children.length));
+  const row = box.lastElementChild;
+  const dateInput = row.querySelector('[data-f="date"]');
+  if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+  bindInRowEvents();
+  updateInRowSums();
 }
 
 function addOutRow(){
   const box = document.getElementById("outRows");
   box.insertAdjacentHTML("beforeend", outRowTemplate(box.children.length));
+  const row = box.lastElementChild;
+  const dateInput = row.querySelector('[data-f="date"]');
+  if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
   bindOutRowEvents();
-  updateOutTotals();
+  updateOutRowSums();
 }
 
 function removeRow(containerId, btn){
@@ -210,8 +227,38 @@ function removeRow(containerId, btn){
     return;
   }
   btn.closest(".rowCard").remove();
+  if(containerId === "inRows"){
+    updateInRowSums();
+  }
   if(containerId === "outRows"){
-    updateOutTotals();
+    updateOutRowSums();
+  }
+}
+
+function bindInRowEvents(){
+  const rows = [...document.querySelectorAll("#inRows .rowCard")];
+  rows.forEach((row)=>{
+    const qtyInput = row.querySelector('[data-f="qty"]');
+    const priceInput = row.querySelector('[data-f="price"]');
+    if(qtyInput && !qtyInput.dataset.boundIn){
+      qtyInput.addEventListener("input", updateInRowSums);
+      qtyInput.dataset.boundIn = "1";
+    }
+    if(priceInput && !priceInput.dataset.boundIn){
+      priceInput.addEventListener("input", updateInRowSums);
+      priceInput.dataset.boundIn = "1";
+    }
+  });
+}
+
+function updateInRowSums(){
+  const rows = [...document.querySelectorAll("#inRows .rowCard")];
+  for(const row of rows){
+    const qty = Number(row.querySelector('[data-f="qty"]').value || 0);
+    const price = Number(row.querySelector('[data-f="price"]').value || 0);
+    const sum = qty > 0 && price >= 0 ? qty * price : 0;
+    const sumEl = row.querySelector('[data-sum="in"]');
+    if(sumEl) sumEl.textContent = money(sum);
   }
 }
 
@@ -221,28 +268,25 @@ function bindOutRowEvents(){
     const qtyInput = row.querySelector('[data-f="qty"]');
     const priceInput = row.querySelector('[data-f="price"]');
     if(qtyInput && !qtyInput.dataset.bound){
-      qtyInput.addEventListener("input", updateOutTotals);
+      qtyInput.addEventListener("input", updateOutRowSums);
       qtyInput.dataset.bound = "1";
     }
     if(priceInput && !priceInput.dataset.bound){
-      priceInput.addEventListener("input", updateOutTotals);
+      priceInput.addEventListener("input", updateOutRowSums);
       priceInput.dataset.bound = "1";
     }
   });
 }
 
-function updateOutTotals(){
+function updateOutRowSums(){
   const rows = [...document.querySelectorAll("#outRows .rowCard")];
-  let totalQty = 0;
-  let totalSales = 0;
   for(const row of rows){
     const qty = Number(row.querySelector('[data-f="qty"]').value || 0);
     const sellPrice = Number(row.querySelector('[data-f="price"]').value || 0);
-    if(qty > 0) totalQty += qty;
-    if(qty > 0 && sellPrice >= 0) totalSales += qty * sellPrice;
+    const sum = qty > 0 && sellPrice >= 0 ? qty * sellPrice : 0;
+    const sumEl = row.querySelector('[data-sum="out"]');
+    if(sumEl) sumEl.textContent = money(sum);
   }
-  document.getElementById("sumOutQty").textContent = money(totalQty);
-  document.getElementById("sumOutSales").textContent = money(totalSales);
 }
 
 function showTab(name){
@@ -264,19 +308,21 @@ async function addIn(){
       const variant = row.querySelector('[data-f="variant"]').value.trim();
       const qty = Number(row.querySelector('[data-f="qty"]').value);
       const price = Number(row.querySelector('[data-f="price"]').value);
+      const date = row.querySelector('[data-f="date"]').value;
       if(!model || !variant || qty <= 0 || price < 0){
         throw new Error("Kirim qatorlarida model, variant, son va narxni to‘g‘ri kiriting.");
       }
       await api("/api/in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, variant, qty, price })
+        body: JSON.stringify({ model, variant, qty, price, date })
       });
     }
 
     await render();
     document.getElementById("inRows").innerHTML = "";
     addInRow();
+    updateInRowSums();
     alert("Barcha kirimlar saqlandi.");
   } catch (err) {
     alert(err.message);
@@ -292,13 +338,14 @@ async function addOut(){
       const variant = row.querySelector('[data-f="variant"]').value.trim();
       const qty = Number(row.querySelector('[data-f="qty"]').value);
       const sellPrice = Number(row.querySelector('[data-f="price"]').value);
+      const date = row.querySelector('[data-f="date"]').value;
       if(!model || !variant || qty <= 0 || sellPrice < 0){
         throw new Error("Chiqim qatorlarida model, variant, son va narxni to‘g‘ri kiriting.");
       }
       const result = await api("/api/out", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, variant, qty, sellPrice })
+        body: JSON.stringify({ model, variant, qty, sellPrice, date })
       });
       totalProfit += Number(result.profit || 0);
     }
@@ -306,7 +353,7 @@ async function addOut(){
     await render();
     document.getElementById("outRows").innerHTML = "";
     addOutRow();
-    updateOutTotals();
+    updateOutRowSums();
     alert("Barcha chiqimlar saqlandi. Jami foyda: " + money(totalProfit));
   } catch (err) {
     alert(err.message);
@@ -365,29 +412,53 @@ function renderStock(){
       <small>Variant: ${p.variant}</small><br>
       <small>Olingan o‘rtacha narx: ${money(p.buyPrice)}</small><br>
       <small>Qoldiq summasi: ${money(Number(p.qty)*Number(p.buyPrice))}</small>
+      <div class="actionRow">
+        <button class="gray" type="button" onclick="editProduct(${p.id})">Tahrirlash</button>
+        <button class="red" type="button" onclick="deleteProduct(${p.id}, '${String(p.model).replace(/'/g, "\\'")}')">O‘chirish</button>
+      </div>
     </div>
   `).join("");
 }
 
 function renderReport(){
   const box = document.getElementById("reportBox");
+  const incomingLogs = state.incomingLogs || [];
+  const sales = state.sales || [];
 
-  if(state.sales.length === 0){
-    box.innerHTML = '<div class="empty">Hali chiqim qilinmagan</div>';
+  if(incomingLogs.length === 0 && sales.length === 0){
+    box.innerHTML = '<div class="empty">Hali hisobot ma’lumoti yo‘q</div>';
     return;
   }
 
-  box.innerHTML = state.sales.map(x => `
-    <div class="item">
-      <div class="top">
-        <b>${x.model}</b>
-        <b class="${x.profit >= 0 ? "profit":"loss"}">${money(x.profit)}</b>
-      </div>
-      <small>${new Date(x.createdAt).toLocaleString("uz-UZ")}</small><br>
-      <small>Variant: ${x.variant}</small><br>
-      <small>Soni: ${money(x.qty)} dona</small><br>
-      <small>Olingan: ${money(x.buyPrice)} · Sotilgan: ${money(x.sellPrice)}</small><br>
-      <small>Sotuv: ${money(x.sales)} · Tannarx: ${money(x.cost)}</small>
+  const dayMap = new Map();
+
+  incomingLogs.forEach((x) => {
+    const day = new Date(x.createdAt).toISOString().slice(0, 10);
+    const item = dayMap.get(day) || { incomingQty: 0, incomingTotal: 0, salesQty: 0, salesTotal: 0, profit: 0 };
+    item.incomingQty += Number(x.qty || 0);
+    item.incomingTotal += Number(x.total || 0);
+    dayMap.set(day, item);
+  });
+
+  sales.forEach((x) => {
+    const day = new Date(x.createdAt).toISOString().slice(0, 10);
+    const item = dayMap.get(day) || { incomingQty: 0, incomingTotal: 0, salesQty: 0, salesTotal: 0, profit: 0 };
+    item.salesQty += Number(x.qty || 0);
+    item.salesTotal += Number(x.sales || 0);
+    item.profit += Number(x.profit || 0);
+    dayMap.set(day, item);
+  });
+
+  const sortedDays = [...dayMap.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+
+  box.innerHTML = sortedDays.map(([day, item]) => `
+    <div class="reportDay">
+      <h3>${new Date(`${day}T00:00:00`).toLocaleDateString("uz-UZ")}</h3>
+      <small>Kirim soni: ${money(item.incomingQty)} dona</small><br>
+      <small>Kirim summasi: ${money(item.incomingTotal)}</small><br>
+      <small>Chiqim soni: ${money(item.salesQty)} dona</small><br>
+      <small>Sotuv summasi: ${money(item.salesTotal)}</small><br>
+      <small class="${item.profit >= 0 ? "profit":"loss"}">Foyda: ${money(item.profit)}</small>
     </div>
   `).join("");
 }
@@ -397,13 +468,61 @@ function exportCSV(){
 }
 
 async function resetAll(){
-  if(confirm("Hamma qoldiq va hisobot o‘chadi. Davom etasizmi?")){
+  if(confirm("Diqqat! Hamma qoldiq, kirim va chiqim hisobotlari butunlay o‘chadi. Rostdan davom etasizmi?")){
     try {
       await api("/api/reset", { method: "DELETE" });
       await render();
     } catch (err) {
       alert(err.message);
     }
+  }
+}
+
+async function editProduct(id){
+  const current = (state.products || []).find((p) => p.id === id);
+  if(!current){
+    alert("Mahsulot topilmadi.");
+    return;
+  }
+
+  const model = prompt("Model nomini kiriting:", current.model);
+  if(model === null) return;
+  const variant = prompt("Variantni kiriting:", current.variant);
+  if(variant === null) return;
+  const qty = prompt("Qoldiq sonini kiriting:", current.qty);
+  if(qty === null) return;
+  const buyPrice = prompt("Olingan narxni kiriting:", current.buyPrice);
+  if(buyPrice === null) return;
+
+  try {
+    await api(`/api/products/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: model.trim(),
+        variant: variant.trim(),
+        qty: Number(qty),
+        buyPrice: Number(buyPrice)
+      })
+    });
+    await render();
+    alert("Qoldiq yangilandi.");
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function deleteProduct(id, model){
+  if(!confirm(`Diqqat! "${model}" mahsuloti qoldiqdan o‘chiriladi. Davom etasizmi?`)){
+    return;
+  }
+
+  try {
+    await api(`/api/products/${id}`, { method: "DELETE" });
+    await render();
+    alert("Mahsulot o‘chirildi.");
+  } catch (err) {
+    alert(err.message);
   }
 }
 
