@@ -63,6 +63,11 @@ function makeKey(model, variant) {
   return `${normalize(model)}___${normalize(variant)}`;
 }
 
+function isDuplicateLookupKeyError(message) {
+  const text = String(message || "").toLowerCase();
+  return text.includes("products_lookup_key_key") || text.includes("duplicate key value");
+}
+
 function mapProduct(row) {
   return {
     id: row.id,
@@ -234,6 +239,24 @@ async function getProductByKey(lookupKey) {
   return rows[0];
 }
 
+async function mergeIncomingStock(existing, qty, price, now) {
+  const oldValue = Number(existing.qty || 0) * Number(existing.buy_price || 0);
+  const newValue = qty * price;
+  const newQty = Number(existing.qty || 0) + qty;
+  const newBuyPrice = newQty > 0 ? (oldValue + newValue) / newQty : price;
+
+  const query = new URLSearchParams({ id: `eq.${existing.id}` });
+  await supabaseRequest(`/products?${query.toString()}`, {
+    method: "PATCH",
+    prefer: "return=minimal",
+    body: {
+      qty: newQty,
+      buy_price: newBuyPrice,
+      updated_at: now,
+    },
+  });
+}
+
 async function handleApi(req, res, url) {
   if (req.method === "OPTIONS") {
     res.writeHead(204, {
@@ -300,35 +323,36 @@ async function handleApi(req, res, url) {
       const existing = await getProductByKey(lookupKey);
 
       if (existing) {
-        const oldValue = Number(existing.qty || 0) * Number(existing.buy_price || 0);
-        const newValue = qty * price;
-        const newQty = Number(existing.qty || 0) + qty;
-        const newBuyPrice = newQty > 0 ? (oldValue + newValue) / newQty : price;
-
-        const query = new URLSearchParams({ id: `eq.${existing.id}` });
-        await supabaseRequest(`/products?${query.toString()}`, {
-          method: "PATCH",
-          prefer: "return=minimal",
-          body: {
-            qty: newQty,
-            buy_price: newBuyPrice,
-            updated_at: now,
-          },
-        });
+        await mergeIncomingStock(existing, qty, price, now);
       } else {
-        await supabaseRequest("/products", {
-          method: "POST",
-          prefer: "return=minimal",
-          body: {
-            model,
-            variant,
-            lookup_key: lookupKey,
-            qty,
-            buy_price: price,
-            created_at: now,
-            updated_at: now,
-          },
-        });
+        try {
+          await supabaseRequest("/products", {
+            method: "POST",
+            prefer: "return=minimal",
+            body: {
+              model,
+              variant,
+              lookup_key: lookupKey,
+              qty,
+              buy_price: price,
+              created_at: now,
+              updated_at: now,
+            },
+          });
+        } catch (err) {
+          // If another request inserted the same lookup_key first, recover by
+          // fetching the row and folding this stock into the existing product.
+          if (!isDuplicateLookupKeyError(err.message)) {
+            throw err;
+          }
+
+          const conflicted = await getProductByKey(lookupKey);
+          if (!conflicted) {
+            throw err;
+          }
+
+          await mergeIncomingStock(conflicted, qty, price, now);
+        }
       }
 
       sendJson(res, 200, { ok: true, message: "Kirim saqlandi." });
