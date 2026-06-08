@@ -95,6 +95,18 @@ function mapSale(row) {
   };
 }
 
+function mapIncoming(row) {
+  return {
+    id: row.id,
+    createdAt: row.created_at,
+    model: row.model,
+    variant: row.variant,
+    qty: Number(row.qty || 0),
+    buyPrice: Number(row.buy_price || 0),
+    total: Number(row.total || 0),
+  };
+}
+
 function computeSummary(products, sales) {
   return {
     totalQty: products.reduce((sum, p) => sum + Number(p.qty || 0), 0),
@@ -227,6 +239,16 @@ async function getSales() {
   return Array.isArray(rows) ? rows.map(mapSale) : [];
 }
 
+async function getIncomingLogs() {
+  const query = new URLSearchParams({
+    select: "id,created_at,model,variant,qty,buy_price,total",
+    order: "created_at.desc",
+  });
+
+  const rows = await supabaseRequest(`/incoming_logs?${query.toString()}`);
+  return Array.isArray(rows) ? rows.map(mapIncoming) : [];
+}
+
 async function getProductByKey(lookupKey) {
   const query = new URLSearchParams({
     select: "id,model,variant,lookup_key,qty,buy_price,created_at,updated_at",
@@ -255,6 +277,19 @@ async function mergeIncomingStock(existing, qty, price, now) {
       updated_at: now,
     },
   });
+}
+
+function parseClientDate(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return new Date().toISOString();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return new Date(`${raw}T12:00:00.000Z`).toISOString();
+  }
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error("Sana noto‘g‘ri kiritildi.");
+  }
+  return parsed.toISOString();
 }
 
 async function handleApi(req, res, url) {
@@ -286,10 +321,11 @@ async function handleApi(req, res, url) {
 
   if (req.method === "GET" && url.pathname === "/api/state") {
     try {
-      const [products, sales] = await Promise.all([getProducts(), getSales()]);
+      const [products, sales, incomingLogs] = await Promise.all([getProducts(), getSales(), getIncomingLogs()]);
       sendJson(res, 200, {
         products,
         sales,
+        incomingLogs,
         summary: computeSummary(products, sales),
       });
     } catch (err) {
@@ -311,9 +347,17 @@ async function handleApi(req, res, url) {
     const variant = String(body.variant || "").trim();
     const qty = Number(body.qty);
     const price = Number(body.price);
+    let createdAt;
 
     if (!model || !variant || !(qty > 0) || price < 0) {
       sendJson(res, 400, { error: "Model, variant, soni va olingan narxini to‘g‘ri kiriting." });
+      return true;
+    }
+
+    try {
+      createdAt = parseClientDate(body.date);
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
       return true;
     }
 
@@ -355,6 +399,19 @@ async function handleApi(req, res, url) {
         }
       }
 
+      await supabaseRequest("/incoming_logs", {
+        method: "POST",
+        prefer: "return=minimal",
+        body: {
+          created_at: createdAt,
+          model,
+          variant,
+          qty,
+          buy_price: price,
+          total: qty * price,
+        },
+      });
+
       sendJson(res, 200, { ok: true, message: "Kirim saqlandi." });
     } catch (err) {
       sendJson(res, 500, { error: err.message });
@@ -375,9 +432,17 @@ async function handleApi(req, res, url) {
     const variant = String(body.variant || "").trim();
     const qty = Number(body.qty);
     const sellPrice = Number(body.sellPrice);
+    let createdAt;
 
     if (!model || !variant || !(qty > 0) || sellPrice < 0) {
       sendJson(res, 400, { error: "Model, variant, chiqim soni va sotilgan narxini to‘g‘ri kiriting." });
+      return true;
+    }
+
+    try {
+      createdAt = parseClientDate(body.date);
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
       return true;
     }
 
@@ -416,7 +481,7 @@ async function handleApi(req, res, url) {
         method: "POST",
         prefer: "return=minimal",
         body: {
-          created_at: now,
+          created_at: createdAt,
           model,
           variant,
           qty,
@@ -429,6 +494,65 @@ async function handleApi(req, res, url) {
       });
 
       sendJson(res, 200, { ok: true, profit, message: "Chiqim saqlandi." });
+    } catch (err) {
+      sendJson(res, 500, { error: err.message });
+    }
+    return true;
+  }
+
+  const productMatch = url.pathname.match(/^\/api\/products\/(\d+)$/);
+  if (productMatch && req.method === "PATCH") {
+    let body;
+    try {
+      body = await parseBody(req);
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+      return true;
+    }
+
+    const id = Number(productMatch[1]);
+    const model = String(body.model || "").trim();
+    const variant = String(body.variant || "").trim();
+    const qty = Number(body.qty);
+    const buyPrice = Number(body.buyPrice);
+
+    if (!model || !variant || qty < 0 || buyPrice < 0) {
+      sendJson(res, 400, { error: "Model, variant, son va narxni to‘g‘ri kiriting." });
+      return true;
+    }
+
+    try {
+      const now = new Date().toISOString();
+      const lookupKey = makeKey(model, variant);
+      const query = new URLSearchParams({ id: `eq.${id}` });
+      await supabaseRequest(`/products?${query.toString()}`, {
+        method: "PATCH",
+        prefer: "return=minimal",
+        body: {
+          model,
+          variant,
+          lookup_key: lookupKey,
+          qty,
+          buy_price: buyPrice,
+          updated_at: now,
+        },
+      });
+      sendJson(res, 200, { ok: true, message: "Qoldiq yangilandi." });
+    } catch (err) {
+      sendJson(res, 500, { error: err.message });
+    }
+    return true;
+  }
+
+  if (productMatch && req.method === "DELETE") {
+    const id = Number(productMatch[1]);
+    try {
+      const query = new URLSearchParams({ id: `eq.${id}` });
+      await supabaseRequest(`/products?${query.toString()}`, {
+        method: "DELETE",
+        prefer: "return=minimal",
+      });
+      sendJson(res, 200, { ok: true, message: "Mahsulot o‘chirildi." });
     } catch (err) {
       sendJson(res, 500, { error: err.message });
     }
@@ -468,6 +592,10 @@ async function handleApi(req, res, url) {
   if (req.method === "DELETE" && url.pathname === "/api/reset") {
     try {
       await supabaseRequest("/sales?id=gt.0", {
+        method: "DELETE",
+        prefer: "return=minimal",
+      });
+      await supabaseRequest("/incoming_logs?id=gt.0", {
         method: "DELETE",
         prefer: "return=minimal",
       });
