@@ -1,14 +1,15 @@
 services:
   - type: web
     name: ombor-backend
-    env: node
+    runtime: node
     plan: free
-    buildCommand: "npm ci"
+    buildCommand: "npm install"
     startCommand: "node server.js"
+    healthCheckPath: /api/health
     envVars:
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: NODE_VERSION
-        value: 22
+        value: "22"
