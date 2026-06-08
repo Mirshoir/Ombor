@@ -2,6 +2,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { URL } = require("url");
+const XLSX = require("xlsx");
 
 function loadDotEnv() {
   const envPath = path.join(__dirname, ".env");
@@ -176,6 +177,38 @@ function toCsv(rows) {
         .join(",")
     )
     .join("\n");
+}
+
+function buildDailySummary(incomingLogs, sales) {
+  const dayMap = new Map();
+
+  incomingLogs.forEach((x) => {
+    const day = new Date(x.createdAt).toISOString().slice(0, 10);
+    const item = dayMap.get(day) || { incomingQty: 0, incomingTotal: 0, salesQty: 0, salesTotal: 0, profit: 0 };
+    item.incomingQty += Number(x.qty || 0);
+    item.incomingTotal += Number(x.total || 0);
+    dayMap.set(day, item);
+  });
+
+  sales.forEach((x) => {
+    const day = new Date(x.createdAt).toISOString().slice(0, 10);
+    const item = dayMap.get(day) || { incomingQty: 0, incomingTotal: 0, salesQty: 0, salesTotal: 0, profit: 0 };
+    item.salesQty += Number(x.qty || 0);
+    item.salesTotal += Number(x.sales || 0);
+    item.profit += Number(x.profit || 0);
+    dayMap.set(day, item);
+  });
+
+  return [...dayMap.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([day, item]) => ({
+      Sana: day,
+      "Kirim soni": item.incomingQty,
+      "Kirim summasi": item.incomingTotal,
+      "Chiqim soni": item.salesQty,
+      "Sotuv summasi": item.salesTotal,
+      Foyda: item.profit,
+    }));
 }
 
 async function supabaseRequest(resourcePath, options = {}) {
@@ -583,6 +616,56 @@ async function handleApi(req, res, url) {
         "Access-Control-Allow-Origin": "*",
       });
       res.end(toCsv(rows));
+    } catch (err) {
+      sendJson(res, 500, { error: err.message });
+    }
+    return true;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/export/xlsx") {
+    try {
+      const [incomingLogs, sales] = await Promise.all([getIncomingLogs(), getSales()]);
+      const workbook = XLSX.utils.book_new();
+
+      const incomingSheet = XLSX.utils.json_to_sheet(
+        incomingLogs.map((x) => ({
+          Sana: new Date(x.createdAt).toLocaleString("uz-UZ"),
+          Model: x.model,
+          Variant: x.variant,
+          Soni: x.qty,
+          "Olingan narx": x.buyPrice,
+          Jami: x.total,
+        }))
+      );
+
+      const salesSheet = XLSX.utils.json_to_sheet(
+        sales.map((x) => ({
+          Sana: new Date(x.createdAt).toLocaleString("uz-UZ"),
+          Model: x.model,
+          Variant: x.variant,
+          Soni: x.qty,
+          "Olingan narx": x.buyPrice,
+          "Sotilgan narx": x.sellPrice,
+          Tannarx: x.cost,
+          Sotuv: x.sales,
+          Foyda: x.profit,
+        }))
+      );
+
+      const dailySheet = XLSX.utils.json_to_sheet(buildDailySummary(incomingLogs, sales));
+
+      XLSX.utils.book_append_sheet(workbook, incomingSheet, "Kirim");
+      XLSX.utils.book_append_sheet(workbook, salesSheet, "Chiqim");
+      XLSX.utils.book_append_sheet(workbook, dailySheet, "Kunlik_hisobot");
+
+      const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+      res.writeHead(200, {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": "attachment; filename=ombor_hisobot.xlsx",
+        "Access-Control-Allow-Origin": "*",
+      });
+      res.end(buffer);
     } catch (err) {
       sendJson(res, 500, { error: err.message });
     }
