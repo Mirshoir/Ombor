@@ -8,53 +8,71 @@
   <title>Ombor</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
-    body{background:#f3f4f6;color:#111827;padding-bottom:80px}
-    header{background:#111827;color:#fff;padding:20px 16px;text-align:center;position:sticky;top:0;z-index:5}
+    body{background:#f3f4f6;color:#111827;padding-bottom:88px}
+    header{background:#111827;color:#fff;padding:20px 16px;text-align:center;position:sticky;top:0;z-index:10;box-shadow:0 6px 20px rgba(17,24,39,.2)}
     header h1{font-size:24px;margin-bottom:4px}
     header p{font-size:13px;color:#d1d5db}
-    .wrap{width:94%;max-width:900px;margin:16px auto}
+    .wrap{width:94%;max-width:1080px;margin:16px auto}
+    .topActions{display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px}
+    .topActions button{width:auto;margin:0;padding:10px 14px;border-radius:999px;font-size:13px}
     .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
-    .card{background:white;border-radius:16px;padding:14px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+    .card{background:#fff;border-radius:18px;padding:14px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
     .card span{display:block;font-size:12px;color:#6b7280;margin-bottom:6px}
     .card b{font-size:21px}
-    .panel{background:white;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
-    h2{font-size:19px;margin-bottom:12px}
-    label{font-size:13px;font-weight:bold;color:#374151;margin-bottom:6px;display:block}
-    input{width:100%;padding:13px;border:1px solid #d1d5db;border-radius:12px;font-size:15px;margin-bottom:11px}
-    input:focus{outline:none;border-color:#111827}
-    button{width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:bold;color:#fff;background:#111827;cursor:pointer;margin-top:4px}
-    .green{background:#059669}.red{background:#dc2626}.gray{background:#6b7280}
-    .tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px;border-top:1px solid #e5e7eb;z-index:10}
-    .tabs button{margin:0;padding:10px 4px;border-radius:12px;font-size:12px;background:#e5e7eb;color:#111827}
-    .tabs button.active{background:#111827;color:white}
+    .panel{background:#fff;border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+    h2{font-size:20px;margin-bottom:12px}
+    h3{font-size:16px;margin-bottom:10px}
+    label{font-size:13px;font-weight:700;color:#374151;margin-bottom:6px;display:block}
+    input,select{width:100%;padding:13px;border:1px solid #d1d5db;border-radius:12px;font-size:15px;margin-bottom:11px;background:#fff}
+    input:focus,select:focus{outline:none;border-color:#111827;box-shadow:0 0 0 3px rgba(17,24,39,.08)}
+    button{width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;color:#fff;background:#111827;cursor:pointer;margin-top:4px}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .green{background:#059669}.red{background:#dc2626}.gray{background:#6b7280}.blue{background:#2563eb}
+    .tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:8px;border-top:1px solid #e5e7eb;z-index:20;box-shadow:0 -6px 20px rgba(0,0,0,.08)}
+    .tabs button{margin:0;padding:10px 4px;border-radius:12px;font-size:11px;background:#e5e7eb;color:#111827}
+    .tabs button.active{background:#111827;color:#fff}
     .hidden{display:none}
     .search{margin-bottom:12px}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:10px 6px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:13px}
-    th{font-size:12px;color:#6b7280}
     .empty{text-align:center;color:#6b7280;padding:20px}
-    .item{border:1px solid #e5e7eb;border-radius:14px;padding:12px;margin-bottom:10px;background:#fff}
-    .item .top{display:flex;justify-content:space-between;gap:10px;margin-bottom:5px}
+    .item{border:1px solid #e5e7eb;border-radius:16px;padding:12px;margin-bottom:10px;background:#fff}
+    .item .top{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px;align-items:flex-start}
     .item b{font-size:15px}
-    .item small{color:#6b7280}
+    .item small{color:#6b7280;line-height:1.5}
     .profit{color:#059669}.loss{color:#dc2626}
     .note{background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:11px;border-radius:12px;font-size:13px;margin-bottom:12px}
     .dangerNote{background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;padding:11px;border-radius:12px;font-size:13px;margin-bottom:12px}
+    .softNote{background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:11px;border-radius:12px;font-size:13px;margin-bottom:12px}
     .rows{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
-    .rowCard{border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#f9fafb}
-    .rowHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:12px;color:#6b7280}
+    .rowCard{border:1px solid #e5e7eb;border-radius:14px;padding:12px;background:#f9fafb}
+    .rowHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-size:12px;color:#6b7280}
     .miniBtn{padding:8px 10px;border-radius:10px;font-size:13px;font-weight:700;width:auto;margin:0}
     .miniPlus{background:#111827;color:#fff}
     .miniRemove{background:#e5e7eb;color:#111827}
     .sumBox{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;padding:10px;border-radius:12px;font-size:13px;margin:8px 0 10px}
-    .actionRow{display:flex;gap:8px;margin-top:10px}
-    .actionRow button{flex:1}
-    .reportDay{border:1px solid #dbeafe;background:#f8fbff;border-radius:14px;padding:12px;margin-bottom:10px}
-    .reportDay h3{font-size:15px;margin-bottom:8px}
+    .actionRow{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+    .actionRow button{flex:1;min-width:120px}
+    .reportDay,.reportBlock{border:1px solid #dbeafe;background:#f8fbff;border-radius:14px;padding:12px;margin-bottom:10px}
+    .reportGrid{display:grid;grid-template-columns:1fr;gap:10px}
+    .editGrid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+    .editGrid input{margin-bottom:0}
+    .listHeader{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:12px;font-weight:700}
+    .metricLine{display:flex;flex-wrap:wrap;gap:10px;font-size:13px;color:#374151;margin-top:8px}
+    .metricLine strong{color:#111827}
+    .subtle{color:#6b7280;font-size:12px}
+    .tableWrap{overflow:auto;border:1px solid #e5e7eb;border-radius:14px;background:#fff}
+    table{width:100%;border-collapse:collapse;min-width:720px}
+    th,td{padding:10px 8px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:13px;vertical-align:top}
+    th{font-size:12px;color:#6b7280;background:#f9fafb}
+    .sectionActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .sectionActions button{flex:1;min-width:180px}
+    .tableAction{width:auto;margin:0;padding:8px 10px;border-radius:10px;font-size:12px}
+    .reportFull{grid-column:1/-1}
     @media(min-width:700px){
       .cards{grid-template-columns:repeat(4,1fr)}
-      .form2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-      .form2 input{margin-bottom:0}
+      .reportGrid{grid-template-columns:repeat(2,1fr)}
+      .editGrid{grid-template-columns:repeat(2,1fr)}
+      .tabs button{font-size:12px}
     }
   </style>
 </head>
@@ -65,6 +83,10 @@
 </header>
 
 <div class="wrap">
+  <div class="topActions">
+    <button id="undoBtn" class="blue" onclick="undoLastAction()" disabled>Ortga qaytarish</button>
+  </div>
+
   <div class="cards">
     <div class="card"><span>Jami qoldiq</span><b id="sumQty">0</b></div>
     <div class="card"><span>Qoldiq summasi</span><b id="sumStock">0</b></div>
@@ -74,31 +96,50 @@
 
   <section id="tabIn" class="panel">
     <h2>Kirim qilish</h2>
-    <div class="note">Model oldin bo‘lmasa, kirim qilganda avtomatik yaratiladi. Oldin bo‘lsa, qoldiqqa qo‘shiladi.</div>
+    <div class="note">Model oldin bo‘lmasa, kirim qilinganda avtomatik yaratiladi. Oldin bo‘lsa, qoldiqqa qo‘shiladi.</div>
     <div id="inRows" class="rows"></div>
-    <button class="miniBtn miniPlus" onclick="addInRow()">+ Qator qo‘shish</button>
-    <button class="green" onclick="addIn()">Kirim qilish</button>
+    <button class="miniBtn miniPlus" type="button" onclick="addInRow()">+ Qator qo‘shish</button>
+    <button class="green" type="button" onclick="addIn()">Kirim qilish</button>
   </section>
 
   <section id="tabOut" class="panel hidden">
     <h2>Chiqim qilish</h2>
+    <div class="softNote">Xato yozilgan chiqimlarni keyin alohida <b>Chiqimlar</b> bo‘limidan tahrirlash yoki o‘chirish mumkin.</div>
     <div id="outRows" class="rows"></div>
-    <button class="miniBtn miniPlus" onclick="addOutRow()">+ Qator qo‘shish</button>
-    <button class="red" onclick="addOut()">Chiqim qilish</button>
+    <div id="outTotals" class="sumBox">
+      Jami chiqim soni: <b id="sumOutQty">0</b> · Jami sotuv summasi: <b id="sumOutSales">0</b>
+    </div>
+    <button class="miniBtn miniPlus" type="button" onclick="addOutRow()">+ Qator qo‘shish</button>
+    <button class="red" type="button" onclick="addOut()">Chiqim qilish</button>
+  </section>
+
+  <section id="tabSales" class="panel hidden">
+    <div class="listHeader">
+      <h2>Chiqimlar</h2>
+      <span class="pill" id="salesCountPill">0 ta yozuv</span>
+    </div>
+    <input class="search" id="searchSales" onkeyup="renderSalesHistory()" placeholder="Model, variant yoki sana bo‘yicha qidirish..." />
+    <div id="salesList"></div>
   </section>
 
   <section id="tabStock" class="panel hidden">
-    <h2>Qoldiq</h2>
-    <input class="search" id="searchStock" onkeyup="render()" placeholder="Model yoki variant bo‘yicha qidirish..." />
+    <div class="listHeader">
+      <h2>Qoldiq</h2>
+      <span class="pill" id="stockCountPill">0 ta mahsulot</span>
+    </div>
+    <input class="search" id="searchStock" onkeyup="renderStock()" placeholder="Model yoki variant bo‘yicha qidirish..." />
     <div id="stockList"></div>
   </section>
 
   <section id="tabReport" class="panel hidden">
-    <h2>Pul hisoboti</h2>
+    <h2>Kengaytirilgan hisobot</h2>
+    <div class="softNote">Excel faylida endi faqat summa emas, kirimlar, chiqimlar, kunlik hisobot, qoldiq va model kesimidagi ma’lumotlar ham bo‘ladi.</div>
     <div id="reportBox"></div>
-    <button class="gray" onclick="exportCSV()">Hisobotni CSV qilish</button>
-    <div class="dangerNote">Diqqat: quyidagi tugma bosilsa, barcha qoldiq, kirim va chiqim ma’lumotlari butunlay o‘chadi.</div>
-    <button class="red" onclick="resetAll()">Hammasini tozalash</button>
+    <div class="sectionActions">
+      <button class="gray" type="button" onclick="exportExcel()">Excel hisobotni yuklash</button>
+      <button class="red" type="button" onclick="resetAll()">Hammasini tozalash</button>
+    </div>
+    <div class="dangerNote" style="margin-top:12px">Diqqat: “Hammasini tozalash” bosilsa, barcha qoldiq, kirim va chiqim ma’lumotlari o‘chadi. Bu amalni ortga qaytarib bo‘lmaydi.</div>
   </section>
 </div>
 
@@ -108,6 +149,7 @@
 <div class="tabs">
   <button id="btnIn" class="active" onclick="showTab('In')">Kirim</button>
   <button id="btnOut" onclick="showTab('Out')">Chiqim</button>
+  <button id="btnSales" onclick="showTab('Sales')">Chiqimlar</button>
   <button id="btnStock" onclick="showTab('Stock')">Qoldiq</button>
   <button id="btnReport" onclick="showTab('Report')">Hisobot</button>
 </div>
@@ -116,6 +158,7 @@
 let state = {
   products: [],
   sales: [],
+  incomingLogs: [],
   summary: {
     totalQty: 0,
     stockValue: 0,
@@ -124,7 +167,10 @@ let state = {
   }
 };
 
+const editingProductIds = new Set();
+const editingSaleIds = new Set();
 const API_BASE = location.protocol === "file:" ? "https://ombor-mkb2.onrender.com" : "";
+const UNDO_STORAGE_KEY = "ombor_undo_stack_v1";
 
 function apiUrl(path){
   if(/^https?:\/\//i.test(path)) return path;
@@ -133,6 +179,24 @@ function apiUrl(path){
 
 function money(n){
   return Number(n || 0).toLocaleString("uz-UZ");
+}
+
+function todayValue(){
+  return new Date().toISOString().slice(0, 10);
+}
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatDate(dateValue){
+  if(!dateValue) return "";
+  return new Date(dateValue).toLocaleString("uz-UZ");
 }
 
 async function api(url, options){
@@ -154,6 +218,133 @@ async function api(url, options){
 
 async function loadState(){
   state = await api("/api/state");
+  state.products = state.products || [];
+  state.sales = state.sales || [];
+  state.incomingLogs = state.incomingLogs || [];
+}
+
+function readUndoStack(){
+  try {
+    const raw = localStorage.getItem(UNDO_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_err) {
+    return [];
+  }
+}
+
+function saveUndoStack(stack){
+  localStorage.setItem(UNDO_STORAGE_KEY, JSON.stringify(stack.slice(-20)));
+  updateUndoButton();
+}
+
+function pushUndoAction(action){
+  const stack = readUndoStack();
+  stack.push({ ...action, createdAt: new Date().toISOString() });
+  saveUndoStack(stack);
+}
+
+function updateUndoButton(){
+  const btn = document.getElementById("undoBtn");
+  const stack = readUndoStack();
+  btn.disabled = stack.length === 0;
+  btn.textContent = stack.length === 0 ? "Ortga qaytarish" : `Ortga qaytarish (${stack.length})`;
+}
+
+async function undoLastAction(){
+  const stack = readUndoStack();
+  const action = stack.pop();
+  if(!action){
+    alert("Ortga qaytarish uchun amal topilmadi.");
+    updateUndoButton();
+    return;
+  }
+
+  try {
+    await applyUndo(action);
+    saveUndoStack(stack);
+    await render();
+    alert("Oxirgi amal bekor qilindi.");
+  } catch (err) {
+    stack.push(action);
+    saveUndoStack(stack);
+    alert(`Ortga qaytarishda xato: ${err.message}`);
+  }
+}
+
+async function applyUndo(action){
+  if(action.type === "addInBatch"){
+    const items = [...(action.items || [])].reverse();
+    for(const item of items){
+      if(item.productBefore && item.productBefore.id){
+        await api(`/api/products/${item.productBefore.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(item.productBefore)
+        });
+      } else if(item.productAfter && item.productAfter.id){
+        await api(`/api/products/${item.productAfter.id}`, { method: "DELETE" });
+      }
+      if(item.incomingLog && item.incomingLog.id){
+        await api(`/api/incoming-logs/${item.incomingLog.id}`, { method: "DELETE" });
+      }
+    }
+    return;
+  }
+
+  if(action.type === "addOutBatch"){
+    const items = [...(action.items || [])].reverse();
+    for(const item of items){
+      if(item.sale && item.sale.id){
+        await api(`/api/sales/${item.sale.id}`, { method: "DELETE" });
+      }
+    }
+    return;
+  }
+
+  if(action.type === "editProduct" && action.previous && action.previous.id){
+    await api(`/api/products/${action.previous.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(action.previous)
+    });
+    return;
+  }
+
+  if(action.type === "deleteProduct" && action.deleted){
+    await api("/api/products/restore", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ product: action.deleted })
+    });
+    return;
+  }
+
+  if(action.type === "editSale" && action.previousSale && action.previousSale.id){
+    await api(`/api/sales/${action.previousSale.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: action.previousSale.model,
+        variant: action.previousSale.variant,
+        qty: action.previousSale.qty,
+        sellPrice: action.previousSale.sellPrice,
+        date: String(action.previousSale.createdAt || "").slice(0, 10)
+      })
+    });
+    return;
+  }
+
+  if(action.type === "deleteSale" && action.deleted){
+    await api("/api/sales/restore", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sale: action.deleted })
+    });
+    return;
+  }
+
+  throw new Error("Bu amal uchun ortga qaytarish qo‘llanmagan.");
 }
 
 function inRowTemplate(i){
@@ -173,7 +364,7 @@ function inRowTemplate(i){
       <input data-f="price" type="number" step="0.01" placeholder="Masalan: 55000" />
       <label>Sana</label>
       <input data-f="date" type="date" />
-      <div class="sumBox">Jami: <b data-sum="in">0</b></div>
+      <div class="sumBox">Sum: <b data-sum="in">0</b></div>
     </div>
   `;
 }
@@ -195,7 +386,7 @@ function outRowTemplate(i){
       <input data-f="price" type="number" step="0.01" placeholder="Masalan: 70000" />
       <label>Sana</label>
       <input data-f="date" type="date" />
-      <div class="sumBox">Jami: <b data-sum="out">0</b></div>
+      <div class="sumBox">Sum: <b data-sum="out">0</b></div>
     </div>
   `;
 }
@@ -205,7 +396,7 @@ function addInRow(){
   box.insertAdjacentHTML("beforeend", inRowTemplate(box.children.length));
   const row = box.lastElementChild;
   const dateInput = row.querySelector('[data-f="date"]');
-  if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+  if(dateInput) dateInput.value = todayValue();
   bindInRowEvents();
   updateInRowSums();
 }
@@ -215,7 +406,7 @@ function addOutRow(){
   box.insertAdjacentHTML("beforeend", outRowTemplate(box.children.length));
   const row = box.lastElementChild;
   const dateInput = row.querySelector('[data-f="date"]');
-  if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+  if(dateInput) dateInput.value = todayValue();
   bindOutRowEvents();
   updateOutRowSums();
 }
@@ -227,12 +418,8 @@ function removeRow(containerId, btn){
     return;
   }
   btn.closest(".rowCard").remove();
-  if(containerId === "inRows"){
-    updateInRowSums();
-  }
-  if(containerId === "outRows"){
-    updateOutRowSums();
-  }
+  if(containerId === "inRows") updateInRowSums();
+  if(containerId === "outRows") updateOutRowSums();
 }
 
 function bindInRowEvents(){
@@ -267,42 +454,57 @@ function bindOutRowEvents(){
   rows.forEach((row)=>{
     const qtyInput = row.querySelector('[data-f="qty"]');
     const priceInput = row.querySelector('[data-f="price"]');
-    if(qtyInput && !qtyInput.dataset.bound){
+    if(qtyInput && !qtyInput.dataset.boundOut){
       qtyInput.addEventListener("input", updateOutRowSums);
-      qtyInput.dataset.bound = "1";
+      qtyInput.dataset.boundOut = "1";
     }
-    if(priceInput && !priceInput.dataset.bound){
+    if(priceInput && !priceInput.dataset.boundOut){
       priceInput.addEventListener("input", updateOutRowSums);
-      priceInput.dataset.bound = "1";
+      priceInput.dataset.boundOut = "1";
     }
   });
 }
 
 function updateOutRowSums(){
   const rows = [...document.querySelectorAll("#outRows .rowCard")];
+  let totalQty = 0;
+  let totalSales = 0;
+
   for(const row of rows){
     const qty = Number(row.querySelector('[data-f="qty"]').value || 0);
     const sellPrice = Number(row.querySelector('[data-f="price"]').value || 0);
     const sum = qty > 0 && sellPrice >= 0 ? qty * sellPrice : 0;
     const sumEl = row.querySelector('[data-sum="out"]');
     if(sumEl) sumEl.textContent = money(sum);
+    totalQty += qty > 0 ? qty : 0;
+    totalSales += sum;
   }
+
+  document.getElementById("sumOutQty").textContent = money(totalQty);
+  document.getElementById("sumOutSales").textContent = money(totalSales);
 }
 
 function showTab(name){
-  ["In","Out","Stock","Report"].forEach(t=>{
-    document.getElementById("tab"+t).classList.add("hidden");
-    document.getElementById("btn"+t).classList.remove("active");
+  ["In","Out","Sales","Stock","Report"].forEach((t)=>{
+    document.getElementById(`tab${t}`).classList.add("hidden");
+    document.getElementById(`btn${t}`).classList.remove("active");
   });
+  document.getElementById(`tab${name}`).classList.remove("hidden");
+  document.getElementById(`btn${name}`).classList.add("active");
+  renderVisibleTab(name);
+}
 
-  document.getElementById("tab"+name).classList.remove("hidden");
-  document.getElementById("btn"+name).classList.add("active");
-  render();
+function renderVisibleTab(name){
+  if(name === "Stock") renderStock();
+  if(name === "Sales") renderSalesHistory();
+  if(name === "Report") renderReport();
 }
 
 async function addIn(){
   try {
     const rows = [...document.querySelectorAll("#inRows .rowCard")];
+    const undoItems = [];
+
     for(const row of rows){
       const model = row.querySelector('[data-f="model"]').value.trim();
       const variant = row.querySelector('[data-f="variant"]').value.trim();
@@ -312,17 +514,25 @@ async function addIn(){
       if(!model || !variant || qty <= 0 || price < 0){
         throw new Error("Kirim qatorlarida model, variant, son va narxni to‘g‘ri kiriting.");
       }
-      await api("/api/in", {
+      const result = await api("/api/in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ model, variant, qty, price, date })
       });
+      undoItems.push({
+        productBefore: result.productBefore,
+        productAfter: result.productAfter,
+        incomingLog: result.incomingLog
+      });
+    }
+
+    if(undoItems.length > 0){
+      pushUndoAction({ type: "addInBatch", items: undoItems });
     }
 
     await render();
     document.getElementById("inRows").innerHTML = "";
     addInRow();
-    updateInRowSums();
     alert("Barcha kirimlar saqlandi.");
   } catch (err) {
     alert(err.message);
@@ -332,7 +542,9 @@ async function addIn(){
 async function addOut(){
   try {
     const rows = [...document.querySelectorAll("#outRows .rowCard")];
+    const undoItems = [];
     let totalProfit = 0;
+
     for(const row of rows){
       const model = row.querySelector('[data-f="model"]').value.trim();
       const variant = row.querySelector('[data-f="variant"]').value.trim();
@@ -348,13 +560,18 @@ async function addOut(){
         body: JSON.stringify({ model, variant, qty, sellPrice, date })
       });
       totalProfit += Number(result.profit || 0);
+      undoItems.push({ sale: result.sale });
+    }
+
+    if(undoItems.length > 0){
+      pushUndoAction({ type: "addOutBatch", items: undoItems });
     }
 
     await render();
     document.getElementById("outRows").innerHTML = "";
     addOutRow();
     updateOutRowSums();
-    alert("Barcha chiqimlar saqlandi. Jami foyda: " + money(totalProfit));
+    alert(`Barcha chiqimlar saqlandi. Jami foyda: ${money(totalProfit)}`);
   } catch (err) {
     alert(err.message);
   }
@@ -364,7 +581,7 @@ async function render(){
   try {
     await loadState();
   } catch (_err) {
-    alert("Serverga ulanib bo‘lmadi. Backend ishlayotganini tekshiring.");
+    alert("Serverga ulanib bo‘lmadi. Backend yoki internetni tekshiring.");
     return;
   }
 
@@ -372,30 +589,40 @@ async function render(){
   document.getElementById("sumStock").textContent = money(state.summary.stockValue);
   document.getElementById("sumSales").textContent = money(state.summary.totalSales);
   document.getElementById("sumProfit").textContent = money(state.summary.totalProfit);
+  document.getElementById("stockCountPill").textContent = `${state.products.length} ta mahsulot`;
+  document.getElementById("salesCountPill").textContent = `${state.sales.length} ta yozuv`;
 
-  renderStock();
-  renderReport();
   renderSuggestions();
+  renderStock();
+  renderSalesHistory();
+  renderReport();
+  updateUndoButton();
 }
 
 function renderSuggestions(){
   const modelList = document.getElementById("modelOptions");
   const variantList = document.getElementById("variantOptions");
 
-  const models = [...new Set(state.products.map(p => p.model))].sort((a, b) => a.localeCompare(b));
-  const variants = [...new Set(state.products.map(p => p.variant))].sort((a, b) => a.localeCompare(b));
+  const models = [...new Set(state.products.map((p) => p.model))].sort((a, b) => a.localeCompare(b));
+  const variants = [...new Set(state.products.map((p) => p.variant))].sort((a, b) => a.localeCompare(b));
 
-  modelList.innerHTML = models.map(m => `<option value="${m.replace(/"/g, "&quot;")}"></option>`).join("");
-  variantList.innerHTML = variants.map(v => `<option value="${v.replace(/"/g, "&quot;")}"></option>`).join("");
+  modelList.innerHTML = models.map((m) => `<option value="${escapeHtml(m)}"></option>`).join("");
+  variantList.innerHTML = variants.map((v) => `<option value="${escapeHtml(v)}"></option>`).join("");
+}
+
+function toggleProductEdit(id){
+  if(editingProductIds.has(id)) editingProductIds.delete(id);
+  else editingProductIds.add(id);
+  renderStock();
 }
 
 function renderStock(){
   const q = (document.getElementById("searchStock")?.value || "").toLowerCase();
   const box = document.getElementById("stockList");
 
-  const items = state.products.filter(p =>
-    p.model.toLowerCase().includes(q) ||
-    p.variant.toLowerCase().includes(q)
+  const items = state.products.filter((p) =>
+    String(p.model).toLowerCase().includes(q) ||
+    String(p.variant).toLowerCase().includes(q)
   );
 
   if(items.length === 0){
@@ -403,108 +630,91 @@ function renderStock(){
     return;
   }
 
-  box.innerHTML = items.map(p => `
-    <div class="item">
-      <div class="top">
-        <b>${p.model}</b>
-        <b>${money(p.qty)} dona</b>
-      </div>
-      <small>Variant: ${p.variant}</small><br>
-      <small>Olingan o‘rtacha narx: ${money(p.buyPrice)}</small><br>
-      <small>Qoldiq summasi: ${money(Number(p.qty)*Number(p.buyPrice))}</small>
-      <div class="actionRow">
-        <button class="gray" type="button" onclick="editProduct(${p.id})">Tahrirlash</button>
-        <button class="red" type="button" onclick="deleteProduct(${p.id}, '${String(p.model).replace(/'/g, "\\'")}')">O‘chirish</button>
-      </div>
-    </div>
-  `).join("");
-}
+  box.innerHTML = items.map((p) => {
+    const editing = editingProductIds.has(p.id);
+    const stockValue = Number(p.qty || 0) * Number(p.buyPrice || 0);
 
-function renderReport(){
-  const box = document.getElementById("reportBox");
-  const incomingLogs = state.incomingLogs || [];
-  const sales = state.sales || [];
-
-  if(incomingLogs.length === 0 && sales.length === 0){
-    box.innerHTML = '<div class="empty">Hali hisobot ma’lumoti yo‘q</div>';
-    return;
-  }
-
-  const dayMap = new Map();
-
-  incomingLogs.forEach((x) => {
-    const day = new Date(x.createdAt).toISOString().slice(0, 10);
-    const item = dayMap.get(day) || { incomingQty: 0, incomingTotal: 0, salesQty: 0, salesTotal: 0, profit: 0 };
-    item.incomingQty += Number(x.qty || 0);
-    item.incomingTotal += Number(x.total || 0);
-    dayMap.set(day, item);
-  });
-
-  sales.forEach((x) => {
-    const day = new Date(x.createdAt).toISOString().slice(0, 10);
-    const item = dayMap.get(day) || { incomingQty: 0, incomingTotal: 0, salesQty: 0, salesTotal: 0, profit: 0 };
-    item.salesQty += Number(x.qty || 0);
-    item.salesTotal += Number(x.sales || 0);
-    item.profit += Number(x.profit || 0);
-    dayMap.set(day, item);
-  });
-
-  const sortedDays = [...dayMap.entries()].sort((a, b) => b[0].localeCompare(a[0]));
-
-  box.innerHTML = sortedDays.map(([day, item]) => `
-    <div class="reportDay">
-      <h3>${new Date(`${day}T00:00:00`).toLocaleDateString("uz-UZ")}</h3>
-      <small>Kirim soni: ${money(item.incomingQty)} dona</small><br>
-      <small>Kirim summasi: ${money(item.incomingTotal)}</small><br>
-      <small>Chiqim soni: ${money(item.salesQty)} dona</small><br>
-      <small>Sotuv summasi: ${money(item.salesTotal)}</small><br>
-      <small class="${item.profit >= 0 ? "profit":"loss"}">Foyda: ${money(item.profit)}</small>
-    </div>
-  `).join("");
-}
-
-function exportCSV(){
-  window.location.href = apiUrl("/api/export/csv");
-}
-
-async function resetAll(){
-  if(confirm("Diqqat! Hamma qoldiq, kirim va chiqim hisobotlari butunlay o‘chadi. Rostdan davom etasizmi?")){
-    try {
-      await api("/api/reset", { method: "DELETE" });
-      await render();
-    } catch (err) {
-      alert(err.message);
+    if(editing){
+      return `
+        <div class="item">
+          <div class="top">
+            <div>
+              <b>${escapeHtml(p.model)}</b><br>
+              <small>${escapeHtml(p.variant)}</small>
+            </div>
+            <span class="pill">Tahrirlash</span>
+          </div>
+          <div class="editGrid">
+            <div>
+              <label>Model nomi</label>
+              <input id="editModel_${p.id}" value="${escapeHtml(p.model)}" />
+            </div>
+            <div>
+              <label>Varianti</label>
+              <input id="editVariant_${p.id}" value="${escapeHtml(p.variant)}" />
+            </div>
+            <div>
+              <label>Qoldiq soni</label>
+              <input id="editQty_${p.id}" type="number" value="${p.qty}" />
+            </div>
+            <div>
+              <label>Olingan narx</label>
+              <input id="editBuyPrice_${p.id}" type="number" step="0.01" value="${p.buyPrice}" />
+            </div>
+          </div>
+          <div class="actionRow">
+            <button class="green" type="button" onclick="saveProductEdit(${p.id})">Saqlash</button>
+            <button class="gray" type="button" onclick="toggleProductEdit(${p.id})">Yopish</button>
+            <button class="red" type="button" onclick="deleteProduct(${p.id}, '${escapeHtml(p.model)}')">O‘chirish</button>
+          </div>
+        </div>
+      `;
     }
-  }
+
+    return `
+      <div class="item">
+        <div class="top">
+          <div>
+            <b>${escapeHtml(p.model)}</b><br>
+            <small>Variant: ${escapeHtml(p.variant)}</small>
+          </div>
+          <b>${money(p.qty)} dona</b>
+        </div>
+        <div class="metricLine">
+          <span>Olingan narx: <strong>${money(p.buyPrice)}</strong></span>
+          <span>Qoldiq summasi: <strong>${money(stockValue)}</strong></span>
+          <span class="subtle">Yangilangan: ${formatDate(p.updatedAt || p.createdAt)}</span>
+        </div>
+        <div class="actionRow">
+          <button class="gray" type="button" onclick="toggleProductEdit(${p.id})">Tahrirlash</button>
+          <button class="red" type="button" onclick="deleteProduct(${p.id}, '${escapeHtml(p.model)}')">O‘chirish</button>
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
-async function editProduct(id){
-  const current = (state.products || []).find((p) => p.id === id);
-  if(!current){
-    alert("Mahsulot topilmadi.");
+async function saveProductEdit(id){
+  const model = document.getElementById(`editModel_${id}`)?.value.trim() || "";
+  const variant = document.getElementById(`editVariant_${id}`)?.value.trim() || "";
+  const qty = Number(document.getElementById(`editQty_${id}`)?.value);
+  const buyPrice = Number(document.getElementById(`editBuyPrice_${id}`)?.value);
+
+  if(!model || !variant || qty < 0 || buyPrice < 0){
+    alert("Model, variant, son va narxni to‘g‘ri kiriting.");
     return;
   }
-
-  const model = prompt("Model nomini kiriting:", current.model);
-  if(model === null) return;
-  const variant = prompt("Variantni kiriting:", current.variant);
-  if(variant === null) return;
-  const qty = prompt("Qoldiq sonini kiriting:", current.qty);
-  if(qty === null) return;
-  const buyPrice = prompt("Olingan narxni kiriting:", current.buyPrice);
-  if(buyPrice === null) return;
 
   try {
-    await api(`/api/products/${id}`, {
+    const result = await api(`/api/products/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: model.trim(),
-        variant: variant.trim(),
-        qty: Number(qty),
-        buyPrice: Number(buyPrice)
-      })
+      body: JSON.stringify({ model, variant, qty, buyPrice })
     });
+    if(result.previous){
+      pushUndoAction({ type: "editProduct", previous: result.previous });
+    }
+    editingProductIds.delete(id);
     await render();
     alert("Qoldiq yangilandi.");
   } catch (err) {
@@ -518,7 +728,11 @@ async function deleteProduct(id, model){
   }
 
   try {
-    await api(`/api/products/${id}`, { method: "DELETE" });
+    const result = await api(`/api/products/${id}`, { method: "DELETE" });
+    if(result.deleted){
+      pushUndoAction({ type: "deleteProduct", deleted: result.deleted });
+    }
+    editingProductIds.delete(id);
     await render();
     alert("Mahsulot o‘chirildi.");
   } catch (err) {
@@ -526,8 +740,408 @@ async function deleteProduct(id, model){
   }
 }
 
+function toggleSaleEdit(id){
+  if(editingSaleIds.has(id)) editingSaleIds.delete(id);
+  else editingSaleIds.add(id);
+  renderSalesHistory();
+}
+
+function openSaleEditFromReport(id){
+  editingSaleIds.add(id);
+  showTab("Sales");
+}
+
+function openProductEditFromReport(id){
+  if(!id){
+    alert("Bu kirim uchun mos qoldiq yozuvi topilmadi.");
+    return;
+  }
+  editingProductIds.add(id);
+  showTab("Stock");
+}
+
+function renderSalesHistory(){
+  const box = document.getElementById("salesList");
+  const q = (document.getElementById("searchSales")?.value || "").toLowerCase();
+
+  const items = (state.sales || []).filter((sale) => {
+    const text = [sale.model, sale.variant, formatDate(sale.createdAt)].join(" ").toLowerCase();
+    return text.includes(q);
+  });
+
+  if(items.length === 0){
+    box.innerHTML = '<div class="empty">Chiqim yozuvlari yo‘q</div>';
+    return;
+  }
+
+  box.innerHTML = items.map((sale) => {
+    const editing = editingSaleIds.has(sale.id);
+    if(editing){
+      return `
+        <div class="item">
+          <div class="top">
+            <div>
+              <b>Chiqimni tahrirlash</b><br>
+              <small>${formatDate(sale.createdAt)}</small>
+            </div>
+            <span class="pill">#${sale.id}</span>
+          </div>
+          <div class="editGrid">
+            <div>
+              <label>Sana</label>
+              <input id="saleDate_${sale.id}" type="date" value="${String(sale.createdAt || '').slice(0,10)}" />
+            </div>
+            <div>
+              <label>Model nomi</label>
+              <input id="saleModel_${sale.id}" list="modelOptions" value="${escapeHtml(sale.model)}" />
+            </div>
+            <div>
+              <label>Varianti</label>
+              <input id="saleVariant_${sale.id}" list="variantOptions" value="${escapeHtml(sale.variant)}" />
+            </div>
+            <div>
+              <label>Chiqim soni</label>
+              <input id="saleQty_${sale.id}" type="number" value="${sale.qty}" />
+            </div>
+            <div>
+              <label>Sotilgan narxi</label>
+              <input id="saleSellPrice_${sale.id}" type="number" step="0.01" value="${sale.sellPrice}" />
+            </div>
+          </div>
+          <div class="actionRow">
+            <button class="green" type="button" onclick="saveSaleEdit(${sale.id})">Saqlash</button>
+            <button class="gray" type="button" onclick="toggleSaleEdit(${sale.id})">Yopish</button>
+            <button class="red" type="button" onclick="deleteSale(${sale.id})">O‘chirish</button>
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="item">
+        <div class="top">
+          <div>
+            <b>${escapeHtml(sale.model)}</b><br>
+            <small>${escapeHtml(sale.variant)}</small>
+          </div>
+          <b>${money(sale.qty)} dona</b>
+        </div>
+        <div class="metricLine">
+          <span>Sana: <strong>${formatDate(sale.createdAt)}</strong></span>
+          <span>Sotilgan narx: <strong>${money(sale.sellPrice)}</strong></span>
+          <span>Tannarx: <strong>${money(sale.cost)}</strong></span>
+          <span>Sotuv: <strong>${money(sale.sales)}</strong></span>
+          <span class="${Number(sale.profit || 0) >= 0 ? 'profit' : 'loss'}">Foyda: <strong>${money(sale.profit)}</strong></span>
+        </div>
+        <div class="actionRow">
+          <button class="gray" type="button" onclick="toggleSaleEdit(${sale.id})">Tahrirlash</button>
+          <button class="red" type="button" onclick="deleteSale(${sale.id})">O‘chirish</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+async function saveSaleEdit(id){
+  const model = document.getElementById(`saleModel_${id}`)?.value.trim() || "";
+  const variant = document.getElementById(`saleVariant_${id}`)?.value.trim() || "";
+  const qty = Number(document.getElementById(`saleQty_${id}`)?.value);
+  const sellPrice = Number(document.getElementById(`saleSellPrice_${id}`)?.value);
+  const date = document.getElementById(`saleDate_${id}`)?.value || todayValue();
+
+  if(!model || !variant || qty <= 0 || sellPrice < 0){
+    alert("Model, variant, chiqim soni va sotilgan narxni to‘g‘ri kiriting.");
+    return;
+  }
+
+  try {
+    const result = await api(`/api/sales/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model, variant, qty, sellPrice, date })
+    });
+    if(result.previousSale){
+      pushUndoAction({ type: "editSale", previousSale: result.previousSale });
+    }
+    editingSaleIds.delete(id);
+    await render();
+    alert("Chiqim yangilandi.");
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function deleteSale(id){
+  if(!confirm("Diqqat! Bu chiqim yozuvi o‘chiriladi. Davom etasizmi?")){
+    return;
+  }
+
+  try {
+    const result = await api(`/api/sales/${id}`, { method: "DELETE" });
+    if(result.deleted){
+      pushUndoAction({ type: "deleteSale", deleted: result.deleted });
+    }
+    editingSaleIds.delete(id);
+    await render();
+    alert("Chiqim o‘chirildi.");
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function buildDailySummary(){
+  const dayMap = new Map();
+
+  (state.incomingLogs || []).forEach((x) => {
+    const day = new Date(x.createdAt).toISOString().slice(0, 10);
+    const item = dayMap.get(day) || { incomingQty: 0, incomingTotal: 0, salesQty: 0, salesTotal: 0, profit: 0 };
+    item.incomingQty += Number(x.qty || 0);
+    item.incomingTotal += Number(x.total || 0);
+    dayMap.set(day, item);
+  });
+
+  (state.sales || []).forEach((x) => {
+    const day = new Date(x.createdAt).toISOString().slice(0, 10);
+    const item = dayMap.get(day) || { incomingQty: 0, incomingTotal: 0, salesQty: 0, salesTotal: 0, profit: 0 };
+    item.salesQty += Number(x.qty || 0);
+    item.salesTotal += Number(x.sales || 0);
+    item.profit += Number(x.profit || 0);
+    dayMap.set(day, item);
+  });
+
+  return [...dayMap.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+}
+
+function buildSalesByProduct(){
+  const map = new Map();
+  (state.sales || []).forEach((sale) => {
+    const key = `${sale.model}___${sale.variant}`;
+    const item = map.get(key) || {
+      model: sale.model,
+      variant: sale.variant,
+      qty: 0,
+      sales: 0,
+      cost: 0,
+      profit: 0
+    };
+    item.qty += Number(sale.qty || 0);
+    item.sales += Number(sale.sales || 0);
+    item.cost += Number(sale.cost || 0);
+    item.profit += Number(sale.profit || 0);
+    map.set(key, item);
+  });
+  return [...map.values()].sort((a, b) => b.sales - a.sales);
+}
+
+function buildOverallSalesSummary(){
+  return (state.sales || []).reduce((acc, sale) => {
+    acc.records += 1;
+    acc.qty += Number(sale.qty || 0);
+    acc.sales += Number(sale.sales || 0);
+    acc.cost += Number(sale.cost || 0);
+    acc.profit += Number(sale.profit || 0);
+    return acc;
+  }, { records: 0, qty: 0, sales: 0, cost: 0, profit: 0 });
+}
+
+function renderReport(){
+  const box = document.getElementById("reportBox");
+  const daily = buildDailySummary();
+  const salesByProduct = buildSalesByProduct();
+  const overallSales = buildOverallSalesSummary();
+  const recentIncoming = (state.incomingLogs || []).slice(0, 8);
+  const recentSales = (state.sales || []).slice(0, 8);
+  const allSales = state.sales || [];
+
+  if(daily.length === 0 && recentIncoming.length === 0 && recentSales.length === 0){
+    box.innerHTML = '<div class="empty">Hali hisobot ma’lumoti yo‘q</div>';
+    return;
+  }
+
+  const dailyHtml = daily.map(([day, item]) => `
+    <div class="reportDay">
+      <h3>${new Date(`${day}T00:00:00`).toLocaleDateString("uz-UZ")}</h3>
+      <div class="metricLine">
+        <span>Kirim soni: <strong>${money(item.incomingQty)}</strong></span>
+        <span>Kirim summasi: <strong>${money(item.incomingTotal)}</strong></span>
+        <span>Chiqim soni: <strong>${money(item.salesQty)}</strong></span>
+        <span>Sotuv summasi: <strong>${money(item.salesTotal)}</strong></span>
+        <span class="${item.profit >= 0 ? 'profit' : 'loss'}">Foyda: <strong>${money(item.profit)}</strong></span>
+      </div>
+    </div>
+  `).join("");
+
+  const productRows = salesByProduct.length === 0 ? `
+    <tr><td colspan="6" class="empty">Chiqim ma’lumotlari yo‘q</td></tr>
+  ` : salesByProduct.map((item) => `
+    <tr>
+      <td>${escapeHtml(item.model)}</td>
+      <td>${escapeHtml(item.variant)}</td>
+      <td>${money(item.qty)}</td>
+      <td>${money(item.cost)}</td>
+      <td>${money(item.sales)}</td>
+      <td class="${item.profit >= 0 ? 'profit' : 'loss'}">${money(item.profit)}</td>
+    </tr>
+  `).join("");
+
+  const allSalesRows = allSales.length === 0 ? `
+    <tr><td colspan="8" class="empty">Umumiy chiqimlar yo‘q</td></tr>
+  ` : allSales.map((item) => `
+    <tr>
+      <td>${formatDate(item.createdAt)}</td>
+      <td>${escapeHtml(item.model)}</td>
+      <td>${escapeHtml(item.variant)}</td>
+      <td>${money(item.qty)}</td>
+      <td>${money(item.sellPrice)}</td>
+      <td>${money(item.sales)}</td>
+      <td class="${item.profit >= 0 ? 'profit' : 'loss'}">${money(item.profit)}</td>
+      <td>
+        <div class="actionRow">
+          <button class="gray tableAction" type="button" onclick="openSaleEditFromReport(${item.id})">Tahrirlash</button>
+          <button class="red tableAction" type="button" onclick="deleteSale(${item.id})">O‘chirish</button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+
+  const incomingRows = recentIncoming.length === 0 ? '<div class="empty">Kirimlar yo‘q</div>' : recentIncoming.map((item) => {
+    const productId = state.products.find((p)=>p.model===item.model && p.variant===item.variant)?.id || 0;
+    return `
+    <div class="item">
+      <div class="top">
+        <div>
+          <b>${escapeHtml(item.model)}</b><br>
+          <small>${escapeHtml(item.variant)}</small>
+        </div>
+        <b>${money(item.qty)} dona</b>
+      </div>
+      <div class="metricLine">
+        <span>Sana: <strong>${formatDate(item.createdAt)}</strong></span>
+        <span>Olingan narx: <strong>${money(item.buyPrice)}</strong></span>
+        <span>Jami: <strong>${money(item.total)}</strong></span>
+      </div>
+      <div class="actionRow">
+        <button class="gray" type="button" onclick="openProductEditFromReport(${productId})">Qoldiqni tahrirlash</button>
+      </div>
+    </div>
+  `;
+  }).join("");
+
+  const salesRows = recentSales.length === 0 ? '<div class="empty">Chiqimlar yo‘q</div>' : recentSales.map((item) => `
+    <div class="item">
+      <div class="top">
+        <div>
+          <b>${escapeHtml(item.model)}</b><br>
+          <small>${escapeHtml(item.variant)}</small>
+        </div>
+        <b>${money(item.qty)} dona</b>
+      </div>
+      <div class="metricLine">
+        <span>Sana: <strong>${formatDate(item.createdAt)}</strong></span>
+        <span>Sotuv: <strong>${money(item.sales)}</strong></span>
+        <span class="${item.profit >= 0 ? 'profit' : 'loss'}">Foyda: <strong>${money(item.profit)}</strong></span>
+      </div>
+      <div class="actionRow">
+        <button class="gray" type="button" onclick="openSaleEditFromReport(${item.id})">Tahrirlash</button>
+        <button class="red" type="button" onclick="deleteSale(${item.id})">O‘chirish</button>
+      </div>
+    </div>
+  `).join("");
+
+  box.innerHTML = `
+    <div class="reportGrid">
+      <div class="reportBlock">
+        <h3>Umumiy chiqimlar</h3>
+        <div class="metricLine">
+          <span>Yozuvlar: <strong>${money(overallSales.records)}</strong></span>
+          <span>Jami son: <strong>${money(overallSales.qty)}</strong></span>
+          <span>Jami tannarx: <strong>${money(overallSales.cost)}</strong></span>
+          <span>Jami sotuv: <strong>${money(overallSales.sales)}</strong></span>
+          <span class="${overallSales.profit >= 0 ? 'profit' : 'loss'}">Jami foyda: <strong>${money(overallSales.profit)}</strong></span>
+        </div>
+      </div>
+      <div class="reportBlock">
+        <h3>Kunlik hisobot</h3>
+        ${dailyHtml || '<div class="empty">Kunlik ma’lumot yo‘q</div>'}
+      </div>
+      <div class="reportBlock">
+        <h3>Model bo‘yicha chiqimlar</h3>
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Variant</th>
+                <th>Soni</th>
+                <th>Tannarx</th>
+                <th>Sotuv</th>
+                <th>Foyda</th>
+              </tr>
+            </thead>
+            <tbody>${productRows}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="reportBlock">
+        <h3>So‘nggi kirimlar</h3>
+        ${incomingRows}
+      </div>
+      <div class="reportBlock">
+        <h3>So‘nggi chiqimlar</h3>
+        ${salesRows}
+      </div>
+      <div class="reportBlock reportFull">
+        <h3>Tahrirlanadigan umumiy chiqimlar</h3>
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Sana</th>
+                <th>Model</th>
+                <th>Variant</th>
+                <th>Soni</th>
+                <th>Sotilgan narx</th>
+                <th>Sotuv</th>
+                <th>Foyda</th>
+                <th>Amal</th>
+              </tr>
+            </thead>
+            <tbody>${allSalesRows}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function exportExcel(){
+  const url = apiUrl("/api/export/xlsx");
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "ombor_hisobot.xlsx";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+async function resetAll(){
+  if(!confirm("Diqqat! Hamma qoldiq, kirim va chiqim ma’lumotlari butunlay o‘chadi. Rostdan davom etasizmi?")){
+    return;
+  }
+  try {
+    await api("/api/reset", { method: "DELETE" });
+    localStorage.removeItem(UNDO_STORAGE_KEY);
+    editingProductIds.clear();
+    editingSaleIds.clear();
+    await render();
+    alert("Barcha ma’lumotlar tozalandi.");
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
 if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("sw.js").catch(()=>{});
+  navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
 addInRow();
