@@ -211,6 +211,30 @@ function buildDailySummary(incomingLogs, sales) {
     }));
 }
 
+function buildSalesByProductSummary(sales) {
+  const map = new Map();
+
+  sales.forEach((x) => {
+    const key = `${x.model}___${x.variant}`;
+    const item = map.get(key) || {
+      Model: x.model,
+      Variant: x.variant,
+      "Chiqim soni": 0,
+      Tannarx: 0,
+      Sotuv: 0,
+      Foyda: 0,
+    };
+
+    item["Chiqim soni"] += Number(x.qty || 0);
+    item.Tannarx += Number(x.cost || 0);
+    item.Sotuv += Number(x.sales || 0);
+    item.Foyda += Number(x.profit || 0);
+    map.set(key, item);
+  });
+
+  return [...map.values()].sort((a, b) => Number(b.Sotuv || 0) - Number(a.Sotuv || 0));
+}
+
 async function supabaseRequest(resourcePath, options = {}) {
   const configError = getConfigError();
   if (configError) {
@@ -292,6 +316,126 @@ async function getProductByKey(lookupKey) {
   const rows = await supabaseRequest(`/products?${query.toString()}`);
   if (!Array.isArray(rows) || rows.length === 0) return null;
   return rows[0];
+}
+
+async function getProductById(id) {
+  const query = new URLSearchParams({
+    select: "id,model,variant,lookup_key,qty,buy_price,created_at,updated_at",
+    id: `eq.${id}`,
+    limit: "1",
+  });
+
+  const rows = await supabaseRequest(`/products?${query.toString()}`);
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  return rows[0];
+}
+
+async function getSaleById(id) {
+  const query = new URLSearchParams({
+    select: "id,created_at,model,variant,qty,buy_price,sell_price,cost,sales,profit",
+    id: `eq.${id}`,
+    limit: "1",
+  });
+
+  const rows = await supabaseRequest(`/sales?${query.toString()}`);
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  return rows[0];
+}
+
+async function getIncomingLogById(id) {
+  const query = new URLSearchParams({
+    select: "id,created_at,model,variant,qty,buy_price,total",
+    id: `eq.${id}`,
+    limit: "1",
+  });
+
+  const rows = await supabaseRequest(`/incoming_logs?${query.toString()}`);
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  return rows[0];
+}
+
+async function patchProductById(id, product) {
+  const query = new URLSearchParams({ id: `eq.${id}` });
+  await supabaseRequest(`/products?${query.toString()}`, {
+    method: "PATCH",
+    prefer: "return=minimal",
+    body: {
+      model: product.model,
+      variant: product.variant,
+      lookup_key: makeKey(product.model, product.variant),
+      qty: Number(product.qty || 0),
+      buy_price: Number(product.buyPrice || 0),
+      updated_at: new Date().toISOString(),
+    },
+  });
+}
+
+async function deleteIncomingLogById(id) {
+  const query = new URLSearchParams({ id: `eq.${id}` });
+  await supabaseRequest(`/incoming_logs?${query.toString()}`, {
+    method: "DELETE",
+    prefer: "return=minimal",
+  });
+}
+
+async function deleteSaleById(id) {
+  const query = new URLSearchParams({ id: `eq.${id}` });
+  await supabaseRequest(`/sales?${query.toString()}`, {
+    method: "DELETE",
+    prefer: "return=minimal",
+  });
+}
+
+async function restoreProduct(product) {
+  await supabaseRequest("/products", {
+    method: "POST",
+    prefer: "return=minimal",
+    body: {
+      id: product.id,
+      model: product.model,
+      variant: product.variant,
+      lookup_key: makeKey(product.model, product.variant),
+      qty: Number(product.qty || 0),
+      buy_price: Number(product.buyPrice || 0),
+      created_at: product.createdAt || new Date().toISOString(),
+      updated_at: product.updatedAt || new Date().toISOString(),
+    },
+  });
+}
+
+async function restoreIncomingLog(log) {
+  await supabaseRequest("/incoming_logs", {
+    method: "POST",
+    prefer: "return=minimal",
+    body: {
+      id: log.id,
+      created_at: log.createdAt || new Date().toISOString(),
+      model: log.model,
+      variant: log.variant,
+      qty: Number(log.qty || 0),
+      buy_price: Number(log.buyPrice || 0),
+      total: Number(log.total || 0),
+    },
+  });
+}
+
+async function restoreSale(sale) {
+  await supabaseRequest("/sales", {
+    method: "POST",
+    prefer: "return=minimal",
+    body: {
+      id: sale.id,
+      created_at: sale.createdAt || new Date().toISOString(),
+      model: sale.model,
+      variant: sale.variant,
+      qty: Number(sale.qty || 0),
+      buy_price: Number(sale.buyPrice || 0),
+      sell_price: Number(sale.sellPrice || 0),
+      cost: Number(sale.cost || 0),
+      sales: Number(sale.sales || 0),
+      profit: Number(sale.profit || 0),
+    },
+  });
 }
 
 async function mergeIncomingStock(existing, qty, price, now) {
@@ -398,6 +542,8 @@ async function handleApi(req, res, url) {
       const now = new Date().toISOString();
       const lookupKey = makeKey(model, variant);
       const existing = await getProductByKey(lookupKey);
+      const previousProduct = existing ? mapProduct(existing) : null;
+      let activeProductId = existing ? existing.id : null;
 
       if (existing) {
         await mergeIncomingStock(existing, qty, price, now);
@@ -416,6 +562,8 @@ async function handleApi(req, res, url) {
               updated_at: now,
             },
           });
+          const createdProduct = await getProductByKey(lookupKey);
+          activeProductId = createdProduct?.id || null;
         } catch (err) {
           // If another request inserted the same lookup_key first, recover by
           // fetching the row and folding this stock into the existing product.
@@ -428,13 +576,14 @@ async function handleApi(req, res, url) {
             throw err;
           }
 
+          activeProductId = conflicted.id;
           await mergeIncomingStock(conflicted, qty, price, now);
         }
       }
 
-      await supabaseRequest("/incoming_logs", {
+      const insertedIncoming = await supabaseRequest("/incoming_logs", {
         method: "POST",
-        prefer: "return=minimal",
+        prefer: "return=representation",
         body: {
           created_at: createdAt,
           model,
@@ -445,7 +594,16 @@ async function handleApi(req, res, url) {
         },
       });
 
-      sendJson(res, 200, { ok: true, message: "Kirim saqlandi." });
+      const currentProduct = activeProductId ? await getProductById(activeProductId) : await getProductByKey(lookupKey);
+      const createdLog = Array.isArray(insertedIncoming) && insertedIncoming[0] ? mapIncoming(insertedIncoming[0]) : null;
+
+      sendJson(res, 200, {
+        ok: true,
+        message: "Kirim saqlandi.",
+        productBefore: previousProduct,
+        productAfter: currentProduct ? mapProduct(currentProduct) : null,
+        incomingLog: createdLog,
+      });
     } catch (err) {
       sendJson(res, 500, { error: err.message });
     }
@@ -494,6 +652,7 @@ async function handleApi(req, res, url) {
         return true;
       }
 
+      const previousProduct = mapProduct(existing);
       const buyPrice = Number(existing.buy_price || 0);
       const cost = qty * buyPrice;
       const sales = qty * sellPrice;
@@ -510,9 +669,9 @@ async function handleApi(req, res, url) {
         },
       });
 
-      await supabaseRequest("/sales", {
+      const insertedSale = await supabaseRequest("/sales", {
         method: "POST",
-        prefer: "return=minimal",
+        prefer: "return=representation",
         body: {
           created_at: createdAt,
           model,
@@ -526,7 +685,17 @@ async function handleApi(req, res, url) {
         },
       });
 
-      sendJson(res, 200, { ok: true, profit, message: "Chiqim saqlandi." });
+      const currentProduct = await getProductById(existing.id);
+      const createdSale = Array.isArray(insertedSale) && insertedSale[0] ? mapSale(insertedSale[0]) : null;
+
+      sendJson(res, 200, {
+        ok: true,
+        profit,
+        message: "Chiqim saqlandi.",
+        productBefore: previousProduct,
+        productAfter: currentProduct ? mapProduct(currentProduct) : null,
+        sale: createdSale,
+      });
     } catch (err) {
       sendJson(res, 500, { error: err.message });
     }
@@ -555,6 +724,12 @@ async function handleApi(req, res, url) {
     }
 
     try {
+      const existing = await getProductById(id);
+      if (!existing) {
+        sendJson(res, 404, { error: "Mahsulot topilmadi." });
+        return true;
+      }
+
       const now = new Date().toISOString();
       const lookupKey = makeKey(model, variant);
       const query = new URLSearchParams({ id: `eq.${id}` });
@@ -570,7 +745,31 @@ async function handleApi(req, res, url) {
           updated_at: now,
         },
       });
-      sendJson(res, 200, { ok: true, message: "Qoldiq yangilandi." });
+      const updated = await getProductById(id);
+      sendJson(res, 200, {
+        ok: true,
+        message: "Qoldiq yangilandi.",
+        previous: mapProduct(existing),
+        current: updated ? mapProduct(updated) : null,
+      });
+    } catch (err) {
+      sendJson(res, 500, { error: err.message });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/products/restore") {
+    let body;
+    try {
+      body = await parseBody(req);
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+      return true;
+    }
+
+    try {
+      await restoreProduct(body.product || body);
+      sendJson(res, 200, { ok: true, message: "Mahsulot qayta tiklandi." });
     } catch (err) {
       sendJson(res, 500, { error: err.message });
     }
@@ -580,12 +779,263 @@ async function handleApi(req, res, url) {
   if (productMatch && req.method === "DELETE") {
     const id = Number(productMatch[1]);
     try {
+      const existing = await getProductById(id);
+      if (!existing) {
+        sendJson(res, 404, { error: "Mahsulot topilmadi." });
+        return true;
+      }
       const query = new URLSearchParams({ id: `eq.${id}` });
       await supabaseRequest(`/products?${query.toString()}`, {
         method: "DELETE",
         prefer: "return=minimal",
       });
-      sendJson(res, 200, { ok: true, message: "Mahsulot o‘chirildi." });
+      sendJson(res, 200, {
+        ok: true,
+        message: "Mahsulot o‘chirildi.",
+        deleted: mapProduct(existing),
+      });
+    } catch (err) {
+      sendJson(res, 500, { error: err.message });
+    }
+    return true;
+  }
+
+  const saleMatch = url.pathname.match(/^\/api\/sales\/(\d+)$/);
+  if (saleMatch && req.method === "PATCH") {
+    let body;
+    try {
+      body = await parseBody(req);
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+      return true;
+    }
+
+    const id = Number(saleMatch[1]);
+    const model = String(body.model || "").trim();
+    const variant = String(body.variant || "").trim();
+    const qty = Number(body.qty);
+    const sellPrice = Number(body.sellPrice);
+    let createdAt;
+
+    if (!model || !variant || !(qty > 0) || sellPrice < 0) {
+      sendJson(res, 400, { error: "Model, variant, chiqim soni va sotilgan narxini to‘g‘ri kiriting." });
+      return true;
+    }
+
+    try {
+      createdAt = parseClientDate(body.date);
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+      return true;
+    }
+
+    try {
+      const existingSaleRaw = await getSaleById(id);
+      if (!existingSaleRaw) {
+        sendJson(res, 404, { error: "Chiqim topilmadi." });
+        return true;
+      }
+
+      const existingSale = mapSale(existingSaleRaw);
+      const oldProductRaw = await getProductByKey(makeKey(existingSale.model, existingSale.variant));
+      if (!oldProductRaw) {
+        sendJson(res, 404, { error: "Eski mahsulot qoldiqda topilmadi." });
+        return true;
+      }
+
+      const newProductRaw = await getProductByKey(makeKey(model, variant));
+      if (!newProductRaw) {
+        sendJson(res, 404, { error: "Yangi mahsulot qoldiqda topilmadi." });
+        return true;
+      }
+
+      const oldProductBefore = mapProduct(oldProductRaw);
+      const newProductBefore = mapProduct(newProductRaw);
+      const now = new Date().toISOString();
+
+      if (oldProductRaw.id === newProductRaw.id) {
+        const availableQty = Number(oldProductRaw.qty || 0) + Number(existingSale.qty || 0);
+        if (availableQty < qty) {
+          sendJson(res, 400, { error: `Qoldiq yetarli emas. Hozirgi mavjud son: ${availableQty}` });
+          return true;
+        }
+
+        await supabaseRequest(`/products?id=eq.${oldProductRaw.id}`, {
+          method: "PATCH",
+          prefer: "return=minimal",
+          body: {
+            qty: availableQty - qty,
+            updated_at: now,
+          },
+        });
+      } else {
+        if (Number(newProductRaw.qty || 0) < qty) {
+          sendJson(res, 400, { error: `Yangi mahsulot qoldig‘i yetarli emas. Hozirgi qoldiq: ${newProductRaw.qty}` });
+          return true;
+        }
+
+        await supabaseRequest(`/products?id=eq.${oldProductRaw.id}`, {
+          method: "PATCH",
+          prefer: "return=minimal",
+          body: {
+            qty: Number(oldProductRaw.qty || 0) + Number(existingSale.qty || 0),
+            updated_at: now,
+          },
+        });
+
+        await supabaseRequest(`/products?id=eq.${newProductRaw.id}`, {
+          method: "PATCH",
+          prefer: "return=minimal",
+          body: {
+            qty: Number(newProductRaw.qty || 0) - qty,
+            updated_at: now,
+          },
+        });
+      }
+
+      const buyPrice = Number(newProductRaw.buy_price || 0);
+      const cost = qty * buyPrice;
+      const totalSales = qty * sellPrice;
+      const profit = totalSales - cost;
+
+      await supabaseRequest(`/sales?id=eq.${id}`, {
+        method: "PATCH",
+        prefer: "return=minimal",
+        body: {
+          created_at: createdAt,
+          model,
+          variant,
+          qty,
+          buy_price: buyPrice,
+          sell_price: sellPrice,
+          cost,
+          sales: totalSales,
+          profit,
+        },
+      });
+
+      sendJson(res, 200, {
+        ok: true,
+        message: "Chiqim yangilandi.",
+        previousSale: existingSale,
+        currentSale: mapSale(await getSaleById(id)),
+        oldProductBefore,
+        oldProductAfter: mapProduct(await getProductById(oldProductRaw.id)),
+        newProductBefore,
+        newProductAfter: mapProduct(await getProductById(newProductRaw.id)),
+      });
+    } catch (err) {
+      sendJson(res, 500, { error: err.message });
+    }
+    return true;
+  }
+
+  if (saleMatch && req.method === "DELETE") {
+    const id = Number(saleMatch[1]);
+    try {
+      const saleRaw = await getSaleById(id);
+      if (!saleRaw) {
+        sendJson(res, 404, { error: "Chiqim topilmadi." });
+        return true;
+      }
+
+      const sale = mapSale(saleRaw);
+      const productRaw = await getProductByKey(makeKey(sale.model, sale.variant));
+      if (!productRaw) {
+        sendJson(res, 404, { error: "Mahsulot qoldiqda topilmadi." });
+        return true;
+      }
+
+      const previousProduct = mapProduct(productRaw);
+      await supabaseRequest(`/products?id=eq.${productRaw.id}`, {
+        method: "PATCH",
+        prefer: "return=minimal",
+        body: {
+          qty: Number(productRaw.qty || 0) + Number(sale.qty || 0),
+          updated_at: new Date().toISOString(),
+        },
+      });
+      await deleteSaleById(id);
+
+      sendJson(res, 200, {
+        ok: true,
+        message: "Chiqim o‘chirildi.",
+        deleted: sale,
+        productBefore: previousProduct,
+        productAfter: mapProduct(await getProductById(productRaw.id)),
+      });
+    } catch (err) {
+      sendJson(res, 500, { error: err.message });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/sales/restore") {
+    let body;
+    try {
+      body = await parseBody(req);
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+      return true;
+    }
+
+    try {
+      const sale = body.sale || body;
+      const productRaw = await getProductByKey(makeKey(sale.model, sale.variant));
+      if (!productRaw) {
+        sendJson(res, 404, { error: "Mahsulot qoldiqda topilmadi." });
+        return true;
+      }
+      if (Number(productRaw.qty || 0) < Number(sale.qty || 0)) {
+        sendJson(res, 400, { error: "Qoldiq yetarli emas, chiqimni qayta tiklab bo‘lmadi." });
+        return true;
+      }
+
+      await supabaseRequest(`/products?id=eq.${productRaw.id}`, {
+        method: "PATCH",
+        prefer: "return=minimal",
+        body: {
+          qty: Number(productRaw.qty || 0) - Number(sale.qty || 0),
+          updated_at: new Date().toISOString(),
+        },
+      });
+      await restoreSale(sale);
+      sendJson(res, 200, { ok: true, message: "Chiqim qayta tiklandi." });
+    } catch (err) {
+      sendJson(res, 500, { error: err.message });
+    }
+    return true;
+  }
+
+  const incomingMatch = url.pathname.match(/^\/api\/incoming-logs\/(\d+)$/);
+  if (incomingMatch && req.method === "DELETE") {
+    const id = Number(incomingMatch[1]);
+    try {
+      const log = await getIncomingLogById(id);
+      if (!log) {
+        sendJson(res, 404, { error: "Kirim yozuvi topilmadi." });
+        return true;
+      }
+      await deleteIncomingLogById(id);
+      sendJson(res, 200, { ok: true, message: "Kirim yozuvi o‘chirildi.", deleted: mapIncoming(log) });
+    } catch (err) {
+      sendJson(res, 500, { error: err.message });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/incoming-logs/restore") {
+    let body;
+    try {
+      body = await parseBody(req);
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+      return true;
+    }
+
+    try {
+      await restoreIncomingLog(body.log || body);
+      sendJson(res, 200, { ok: true, message: "Kirim yozuvi qayta tiklandi." });
     } catch (err) {
       sendJson(res, 500, { error: err.message });
     }
@@ -624,8 +1074,26 @@ async function handleApi(req, res, url) {
 
   if (req.method === "GET" && url.pathname === "/api/export/xlsx") {
     try {
-      const [incomingLogs, sales] = await Promise.all([getIncomingLogs(), getSales()]);
+      const [products, incomingLogs, sales] = await Promise.all([getProducts(), getIncomingLogs(), getSales()]);
       const workbook = XLSX.utils.book_new();
+      const summarySheet = XLSX.utils.json_to_sheet([
+        {
+          "Jami qoldiq": computeSummary(products, sales).totalQty,
+          "Qoldiq summasi": computeSummary(products, sales).stockValue,
+          "Sotuv summasi": computeSummary(products, sales).totalSales,
+          Foyda: computeSummary(products, sales).totalProfit,
+        },
+      ]);
+      const stockSheet = XLSX.utils.json_to_sheet(
+        products.map((x) => ({
+          Model: x.model,
+          Variant: x.variant,
+          "Qoldiq soni": x.qty,
+          "Olingan narx": x.buyPrice,
+          "Qoldiq summasi": Number(x.qty || 0) * Number(x.buyPrice || 0),
+          "Yangilangan sana": x.updatedAt || x.createdAt,
+        }))
+      );
 
       const incomingSheet = XLSX.utils.json_to_sheet(
         incomingLogs.map((x) => ({
@@ -653,10 +1121,14 @@ async function handleApi(req, res, url) {
       );
 
       const dailySheet = XLSX.utils.json_to_sheet(buildDailySummary(incomingLogs, sales));
+      const salesByProductSheet = XLSX.utils.json_to_sheet(buildSalesByProductSummary(sales));
 
+      XLSX.utils.book_append_sheet(workbook, summarySheet, "Umumiy");
+      XLSX.utils.book_append_sheet(workbook, stockSheet, "Qoldiq");
       XLSX.utils.book_append_sheet(workbook, incomingSheet, "Kirim");
       XLSX.utils.book_append_sheet(workbook, salesSheet, "Chiqim");
       XLSX.utils.book_append_sheet(workbook, dailySheet, "Kunlik_hisobot");
+      XLSX.utils.book_append_sheet(workbook, salesByProductSheet, "Model_kesimi");
 
       const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
 
